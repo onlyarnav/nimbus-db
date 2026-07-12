@@ -6,15 +6,20 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"github.com/onlyarnav/nimbusdb/services/metadata-service/config"
 	"github.com/onlyarnav/nimbusdb/services/metadata-service/db"
+	grpcserver "github.com/onlyarnav/nimbusdb/services/metadata-service/grpc"
 	"github.com/onlyarnav/nimbusdb/services/metadata-service/handlers"
+	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
 
 // Embed the SQL migrations directory into the binary
@@ -57,7 +62,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handlers.HealthHandler(pool))
 
-	// Setup server with robust timeouts
+	// Setup HTTP server with robust timeouts
 	serverAddr := fmt.Sprintf(":%s", cfg.Port)
 	srv := &http.Server{
 		Addr:         serverAddr,
@@ -67,14 +72,32 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	// Channel to listen for errors during server startup
-	serverErrors := make(chan error, 1)
+	// Setup gRPC server
+	grpcListener, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.GRPCPort))
+	if err != nil {
+		slog.Error("failed to listen on grpc port", "error", err)
+		os.Exit(1)
+	}
 
-	// Start server in background
+	gSrv := grpc.NewServer()
+	pb.RegisterMetadataServiceServer(gSrv, grpcserver.NewServer(pool))
+
+	// Channel to listen for errors during server startup
+	serverErrors := make(chan error, 2)
+
+	// Start HTTP server in background
 	go func() {
 		slog.Info("http server listening", "address", serverAddr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			serverErrors <- err
+			serverErrors <- fmt.Errorf("http server error: %w", err)
+		}
+	}()
+
+	// Start gRPC server in background
+	go func() {
+		slog.Info("grpc server listening", "address", grpcListener.Addr().String())
+		if err := gSrv.Serve(grpcListener); err != nil {
+			serverErrors <- fmt.Errorf("grpc server error: %w", err)
 		}
 	}()
 
@@ -86,14 +109,18 @@ func main() {
 	case <-ctx.Done():
 		slog.Info("shutdown signal received, initiating graceful shutdown")
 
-		// Gracefully shut down server with 5s timeout
+		// Gracefully shut down HTTP server with 5s timeout
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		if err := srv.Shutdown(shutdownCtx); err != nil {
-			slog.Error("failed to gracefully shut down server", "error", err)
+			slog.Error("failed to gracefully shut down http server", "error", err)
 			_ = srv.Close()
 		}
 		slog.Info("http server shut down cleanly")
+
+		// Gracefully shut down gRPC server
+		gSrv.GracefulStop()
+		slog.Info("grpc server shut down cleanly")
 	}
 }
