@@ -1,0 +1,36 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with Lit
+*.out
+*.prof
+
+# Dependency directories
+vendor/
+
+# Local configuration files
+.env
+.env.local
+
+# IDEs/Editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+Thumbs.db
+db.json
+.DS_Store
