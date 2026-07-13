@@ -124,9 +124,7 @@ communicating over a defined API, never sharing in-process state.
 | Deployment                | Docker → Kubernetes (Phase 9) | |
 | CI/CD                     | GitHub Actions | |
 
-**Decision needed from user before Phase 3 starts:** Rust vs C++ for the
-storage engine. Do not default silently — ask, and record the answer here
-once decided.
+**Storage Engine Language:** Rust (decided on 2026-07-14, logged in [rust-vs-cpp.md](file:///d:/nimbus-db/docs/decisions/rust-vs-cpp.md)).
 
 **Conventions to enforce (carried over from prior projects — keep consistent):**
 - Go: standard `gofmt`/`golangci-lint`, table-driven tests, context propagation
@@ -292,9 +290,9 @@ its own tests, its own Dockerfile.
 
 ## 8. Current Status
 
-**Phase in progress:** none yet — this file is the starting point.
-**Language decision pending:** Rust vs C++ for storage engine (Phase 3).
-**Next step:** Phase 1 — Metadata Service + Worker Node registration.
+**Phase in progress:** Phase 2 — Control Plane.
+**Language decision:** Rust for storage engine (Phase 3) (logged in [rust-vs-cpp.md](file:///d:/nimbus-db/docs/decisions/rust-vs-cpp.md)).
+**Next step:** Phase 2 — Database Creation Flow (validate -> choose cluster -> choose node -> provision -> update metadata -> return).
 
 *(Update this section as phases complete — this is the running state file
 for the whole project.)*

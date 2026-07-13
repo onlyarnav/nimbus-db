@@ -62,7 +62,7 @@ finished and verified — never on partial progress.
 |----------|-----------|--------|------------|
 | Postgres vs SQLite for metadata store (dev) | Phase 1, Step 1 | ✅ Resolved | `docs/decisions/metadata-store-choice.md` |
 | gRPC vs REST for internal service calls | Phase 1, Step 1 | ✅ Resolved | `docs/decisions/internal-rpc-choice.md` |
-| Rust vs C++ for storage engine | Phase 3, before any code | ⬜ Pending | — |
+| Rust vs C++ for storage engine | Phase 3, before any code | ✅ Resolved | `docs/decisions/rust-vs-cpp.md` |
 | WAL fsync policy (every write vs batched) | Phase 3, Section 5.1 | ⬜ Pending | — |
 | Replication ACK quorum policy | Phase 3, Section 10.1 | ⬜ Pending (default: ACK from all followers, refine in Phase 4) | — |
 | Consistency model: eventual vs strong | Phase 4, Section 3 | ⬜ Pending | — |
