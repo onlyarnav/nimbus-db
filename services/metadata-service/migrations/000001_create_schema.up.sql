@@ -50,3 +50,8 @@ CREATE TABLE replicas (
     node_id      UUID NOT NULL REFERENCES nodes(id),
     role         TEXT NOT NULL DEFAULT 'follower'  -- leader | follower
 );
+
+-- Seed default region and cluster for out-of-the-box local registration
+INSERT INTO regions (id, name) VALUES ('00000000-0000-0000-0000-000000000000', 'global') ON CONFLICT (name) DO NOTHING;
+INSERT INTO clusters (id, name, region_id) VALUES ('00000000-0000-0000-0000-000000000000', 'default-cluster', '00000000-0000-0000-0000-000000000000') ON CONFLICT (name) DO NOTHING;
+
