@@ -7,6 +7,12 @@ option go_package = "github.com/onlyarnav/nimbusdb/services/metadata-service/pro
 service MetadataService {
   // RegisterNode registers a new worker node in a specific cluster.
   rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse);
+
+  // SendHeartbeat sends a periodic heartbeat containing resource usage statistics.
+  rpc SendHeartbeat(SendHeartbeatRequest) returns (SendHeartbeatResponse);
+
+  // GetNodes returns all registered nodes inside a cluster, or all nodes if cluster_id is empty.
+  rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
 }
 
 message RegisterNodeRequest {
@@ -17,4 +23,52 @@ message RegisterNodeRequest {
 message RegisterNodeResponse {
   string node_id = 1;
   int32 heartbeat_interval_seconds = 2;
+}
+
+message SendHeartbeatRequest {
+  string node_id = 1;
+  float cpu_pct = 2;
+  float memory_pct = 3;
+  float disk_pct = 4;
+  bool healthy = 5;
+}
+
+message SendHeartbeatResponse {
+  bool success = 1;
+}
+
+message GetNodesRequest {
+  string cluster_id = 1; // Optional
+}
+
+message NodeInfo {
+  string id = 1;
+  string cluster_id = 2;
+  string hostname = 3;
+  string status = 4;
+  float cpu_pct = 5;
+  float memory_pct = 6;
+  float disk_pct = 7;
+  string last_heartbeat = 8; // RFC3339 string
+  string registered_at = 9; // RFC3339 string
+}
+
+message GetNodesResponse {
+  repeated NodeInfo nodes = 1;
+}
+
+// Scheduler service contract
+service SchedulerService {
+  // Schedule decides which node should host a workload based on resource load.
+  rpc Schedule(ScheduleRequest) returns (ScheduleResponse);
+}
+
+message ScheduleRequest {
+  string cluster_id = 1;
+}
+
+message ScheduleResponse {
+  string node_id = 1;
+  float score = 2;
+  map<string, float> score_breakdown = 3;
 }

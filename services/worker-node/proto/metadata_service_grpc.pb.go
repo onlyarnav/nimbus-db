@@ -19,7 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MetadataService_RegisterNode_FullMethodName = "/metadata.MetadataService/RegisterNode"
+	MetadataService_RegisterNode_FullMethodName  = "/metadata.MetadataService/RegisterNode"
+	MetadataService_SendHeartbeat_FullMethodName = "/metadata.MetadataService/SendHeartbeat"
+	MetadataService_GetNodes_FullMethodName      = "/metadata.MetadataService/GetNodes"
 )
 
 // MetadataServiceClient is the client API for MetadataService service.
@@ -28,6 +30,10 @@ const (
 type MetadataServiceClient interface {
 	// RegisterNode registers a new worker node in a specific cluster.
 	RegisterNode(ctx context.Context, in *RegisterNodeRequest, opts ...grpc.CallOption) (*RegisterNodeResponse, error)
+	// SendHeartbeat sends a periodic heartbeat containing resource usage statistics.
+	SendHeartbeat(ctx context.Context, in *SendHeartbeatRequest, opts ...grpc.CallOption) (*SendHeartbeatResponse, error)
+	// GetNodes returns all registered nodes inside a cluster, or all nodes if cluster_id is empty.
+	GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
 }
 
 type metadataServiceClient struct {
@@ -48,12 +54,36 @@ func (c *metadataServiceClient) RegisterNode(ctx context.Context, in *RegisterNo
 	return out, nil
 }
 
+func (c *metadataServiceClient) SendHeartbeat(ctx context.Context, in *SendHeartbeatRequest, opts ...grpc.CallOption) (*SendHeartbeatResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendHeartbeatResponse)
+	err := c.cc.Invoke(ctx, MetadataService_SendHeartbeat_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metadataServiceClient) GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetNodesResponse)
+	err := c.cc.Invoke(ctx, MetadataService_GetNodes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MetadataServiceServer is the server API for MetadataService service.
 // All implementations must embed UnimplementedMetadataServiceServer
 // for forward compatibility.
 type MetadataServiceServer interface {
 	// RegisterNode registers a new worker node in a specific cluster.
 	RegisterNode(context.Context, *RegisterNodeRequest) (*RegisterNodeResponse, error)
+	// SendHeartbeat sends a periodic heartbeat containing resource usage statistics.
+	SendHeartbeat(context.Context, *SendHeartbeatRequest) (*SendHeartbeatResponse, error)
+	// GetNodes returns all registered nodes inside a cluster, or all nodes if cluster_id is empty.
+	GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
 	mustEmbedUnimplementedMetadataServiceServer()
 }
 
@@ -66,6 +96,12 @@ type UnimplementedMetadataServiceServer struct{}
 
 func (UnimplementedMetadataServiceServer) RegisterNode(context.Context, *RegisterNodeRequest) (*RegisterNodeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterNode not implemented")
+}
+func (UnimplementedMetadataServiceServer) SendHeartbeat(context.Context, *SendHeartbeatRequest) (*SendHeartbeatResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendHeartbeat not implemented")
+}
+func (UnimplementedMetadataServiceServer) GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetNodes not implemented")
 }
 func (UnimplementedMetadataServiceServer) mustEmbedUnimplementedMetadataServiceServer() {}
 func (UnimplementedMetadataServiceServer) testEmbeddedByValue()                         {}
@@ -106,6 +142,42 @@ func _MetadataService_RegisterNode_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MetadataService_SendHeartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendHeartbeatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetadataServiceServer).SendHeartbeat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetadataService_SendHeartbeat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetadataServiceServer).SendHeartbeat(ctx, req.(*SendHeartbeatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetadataService_GetNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetadataServiceServer).GetNodes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetadataService_GetNodes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetadataServiceServer).GetNodes(ctx, req.(*GetNodesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MetadataService_ServiceDesc is the grpc.ServiceDesc for MetadataService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -116,6 +188,122 @@ var MetadataService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterNode",
 			Handler:    _MetadataService_RegisterNode_Handler,
+		},
+		{
+			MethodName: "SendHeartbeat",
+			Handler:    _MetadataService_SendHeartbeat_Handler,
+		},
+		{
+			MethodName: "GetNodes",
+			Handler:    _MetadataService_GetNodes_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "metadata_service.proto",
+}
+
+const (
+	SchedulerService_Schedule_FullMethodName = "/metadata.SchedulerService/Schedule"
+)
+
+// SchedulerServiceClient is the client API for SchedulerService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Scheduler service contract
+type SchedulerServiceClient interface {
+	// Schedule decides which node should host a workload based on resource load.
+	Schedule(ctx context.Context, in *ScheduleRequest, opts ...grpc.CallOption) (*ScheduleResponse, error)
+}
+
+type schedulerServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewSchedulerServiceClient(cc grpc.ClientConnInterface) SchedulerServiceClient {
+	return &schedulerServiceClient{cc}
+}
+
+func (c *schedulerServiceClient) Schedule(ctx context.Context, in *ScheduleRequest, opts ...grpc.CallOption) (*ScheduleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ScheduleResponse)
+	err := c.cc.Invoke(ctx, SchedulerService_Schedule_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// SchedulerServiceServer is the server API for SchedulerService service.
+// All implementations must embed UnimplementedSchedulerServiceServer
+// for forward compatibility.
+//
+// Scheduler service contract
+type SchedulerServiceServer interface {
+	// Schedule decides which node should host a workload based on resource load.
+	Schedule(context.Context, *ScheduleRequest) (*ScheduleResponse, error)
+	mustEmbedUnimplementedSchedulerServiceServer()
+}
+
+// UnimplementedSchedulerServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedSchedulerServiceServer struct{}
+
+func (UnimplementedSchedulerServiceServer) Schedule(context.Context, *ScheduleRequest) (*ScheduleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Schedule not implemented")
+}
+func (UnimplementedSchedulerServiceServer) mustEmbedUnimplementedSchedulerServiceServer() {}
+func (UnimplementedSchedulerServiceServer) testEmbeddedByValue()                          {}
+
+// UnsafeSchedulerServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SchedulerServiceServer will
+// result in compilation errors.
+type UnsafeSchedulerServiceServer interface {
+	mustEmbedUnimplementedSchedulerServiceServer()
+}
+
+func RegisterSchedulerServiceServer(s grpc.ServiceRegistrar, srv SchedulerServiceServer) {
+	// If the following call panics, it indicates UnimplementedSchedulerServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&SchedulerService_ServiceDesc, srv)
+}
+
+func _SchedulerService_Schedule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ScheduleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SchedulerServiceServer).Schedule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SchedulerService_Schedule_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SchedulerServiceServer).Schedule(ctx, req.(*ScheduleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// SchedulerService_ServiceDesc is the grpc.ServiceDesc for SchedulerService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var SchedulerService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "metadata.SchedulerService",
+	HandlerType: (*SchedulerServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Schedule",
+			Handler:    _SchedulerService_Schedule_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
