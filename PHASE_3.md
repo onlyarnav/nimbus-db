@@ -10,6 +10,16 @@ must be decided and logged in `docs/decisions/rust-vs-cpp.md` before any
 code in this phase is written. This file is written language-agnostically;
 translate to your chosen language's idioms once decided.
 
+**Protocol note (revised 2026-07-13):** This phase introduces **no new
+external or internal API surface**. The Node Agent's gRPC contract
+(`CreateDatabase`, `DeleteDatabase`, `BackupDatabase`, `RestoreDatabase`,
+defined in `PHASE_2.md` Section 3.3) stays exactly as-is from the Control
+Plane's point of view — this phase only changes what happens *inside* the
+Node Agent when those RPCs are called (Section 2 below). `BackupDatabase`/
+`RestoreDatabase` move from stub to real implementation here (Section 8),
+but the RPC signatures do not change. No REST is introduced anywhere in
+this phase — the storage engine has no external clients.
+
 ---
 
 ## 1. Goal of This Phase
@@ -29,7 +39,7 @@ and follower node is consistent and ACK-gated; all of this has measured
 
 ## 2. Scope Boundary — Read This First
 
-This phase touches **only** `services/node-agent/` internals. The RPC
+This phase touches **only** `services/node-agent/` internals. The gRPC
 contract established in Phase 2 (`CreateDatabase`, `DeleteDatabase`, plus
 now-real `BackupDatabase`/`RestoreDatabase`) does not change shape from
 the Control Plane's point of view — only what happens *inside* the Node
@@ -175,19 +185,22 @@ balancing complexity on top.
   snapshot forward).
 - Snapshot format must be self-describing enough to support **real
   backup/restore** — this is where the Phase 2 stub gets replaced:
-  - `BackupDatabase` (Node Agent RPC from Phase 2) now triggers a snapshot
-    and returns a reference to it (e.g., snapshot ID + storage location).
+  - `BackupDatabase` (Node Agent gRPC method, contract defined in
+    `PHASE_2.md` Section 3.3, stubbed in Phase 2 Section 4.3) now
+    triggers a snapshot and returns a reference to it (e.g., snapshot ID +
+    storage location) — same RPC signature, real implementation.
   - `RestoreDatabase(id, snapshotRef)` loads a snapshot and replays WAL
     from that point forward, restoring the database to that point in
-    time.
+    time — same RPC signature, real implementation.
 
 ### 8.2 Acceptance (closes out the Phase 2 backup/restore deferral)
-- **End-to-end backup/restore test:** write data → trigger backup →
-  simulate data loss (delete the live page store) → restore from the
-  backup → verify all data present and correct.
+- **End-to-end backup/restore test:** write data → trigger backup (via
+  `BackupDatabase` gRPC call) → simulate data loss (delete the live page
+  store) → restore from the backup (via `RestoreDatabase` gRPC call) →
+  verify all data present and correct.
 - This satisfies the real backup/restore deliverable that was
-  intentionally deferred from Phase 2 — update `PHASE_2.md`'s Section 4.3
-  status (or note it in `PROJECT_STATUS.md`) once this passes.
+  intentionally deferred from Phase 2 — update `PROJECT_STATUS.md`'s
+  Deferred Items table once this passes.
 
 ---
 
@@ -223,6 +236,10 @@ Client write → Leader WAL append → Replicate WAL entry to followers
      → Follower(s) append to own WAL, ACK → Leader receives quorum ACKs
      → Leader commits, acknowledges client
 ```
+- Replication traffic between nodes is internal service-to-service
+  communication — use gRPC streaming (a natural fit for a continuous WAL
+  entry stream), consistent with the internal-RPC decision already
+  established in Phase 1/2. Do not introduce a separate protocol here.
 - Decide and document ACK quorum policy for this phase (e.g., "ACK from
   all followers" is simplest for now; full quorum/majority logic can be
   refined in Phase 4 alongside multi-region leader election — note this
@@ -267,7 +284,8 @@ proof, matching `GEMINI.md` Section 5 requirements exactly)
       before this phase started), WAL fsync policy, ACK quorum policy
 - [ ] Node Agent README updated to reflect real storage internals,
       backup/restore no longer listed as a stub
-- [ ] `PROJECT_STATUS.md` updated to mark Phase 3 complete
+- [ ] `PROJECT_STATUS.md` updated to mark Phase 3 complete, and the
+      Deferred Items table updated to close out the backup/restore item
 
 ---
 
@@ -290,11 +308,13 @@ proof, matching `GEMINI.md` Section 5 requirements exactly)
 4. Crash Recovery (Section 6) + the randomized kill test (this is the
    milestone — do not move on until this is solid).
 5. Hash Index (Section 7.1) + unit tests, wired into Page Manager/WAL.
-6. Snapshots (Section 8) + backup/restore end-to-end test — this closes
-   the Phase 2 deferral.
+6. Snapshots (Section 8) + backup/restore end-to-end test (wired into the
+   existing `BackupDatabase`/`RestoreDatabase` gRPC methods from Phase 2)
+   — this closes the Phase 2 deferral.
 7. Compaction (Section 9) + before/after space measurement.
 8. B+Tree (Section 7.2), cross-checked against Hash Index.
-9. Replication (Section 10) + convergence and follower-failure tests.
+9. Replication (Section 10, gRPC streaming) + convergence and
+   follower-failure tests.
 10. Benchmarks + READMEs + decision docs + `PROJECT_STATUS.md` update.
 
 Work through these one at a time. After each numbered step, report status

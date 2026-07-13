@@ -6,6 +6,14 @@ This phase assumes a working Metadata Service, node registration,
 heartbeats, Health Manager, and Scheduler from Phase 1 — it builds on top
 of them, it does not rebuild them.
 
+**Protocol note (revised 2026-07-13):** Per `docs/decisions/internal-rpc-choice.md`,
+all service-to-service calls in this phase (Control Plane ↔ Scheduler,
+Control Plane ↔ Metadata Service, Control Plane ↔ Node Agent) are **gRPC**,
+not REST. Only the client/dashboard-facing edge (`/v1/databases` and
+friends, called by external clients or the dashboard) is REST/JSON. This
+mirrors the fix already applied to Phase 1 — do not repeat the earlier
+drift where internal APIs were built as REST.
+
 ---
 
 ## 1. Goal of This Phase
@@ -16,7 +24,7 @@ the existing scheduler, tell that node to create a database, record the
 result in metadata, and handle the case where the chosen node fails
 mid-provision.
 
-**Definition of done:** `POST /createDatabase` reliably provisions a
+**Definition of done:** `POST /v1/databases` reliably provisions a
 database on a healthy node; killing the chosen node mid-provision causes
 an automatic retry onto a different node; metadata always reflects ground
 truth (no databases pointing at dead nodes, no orphaned records).
@@ -28,7 +36,7 @@ truth (no databases pointing at dead nodes, no orphaned records).
 ```
 services/
 ├── control-plane/     ← NEW: orchestrates the createDatabase flow (Go)
-├── node-agent/          ← NEW: runs on each worker, exposes DB lifecycle ops (Go)
+├── node-agent/          ← NEW: runs on each worker, exposes DB lifecycle ops via gRPC (Go)
 ├── metadata-service/     ← EXTENDED: databases/replicas tables become live
 └── scheduler/              ← REUSED as-is from Phase 1, no changes expected
 ```
@@ -42,14 +50,14 @@ the code layout, not just conceptually.
 ## 3. Control Plane
 
 ### 3.1 Responsibilities
-- Owns the `POST /createDatabase` (and `DELETE /database/{id}`) flow.
-- Talks to Scheduler (Phase 1) to pick a node.
-- Talks to Node Agent (this phase, Section 4) to actually create the
-  database on that node.
-- Talks to Metadata Service to persist the outcome.
+- Owns the client-facing create/delete database flow (REST edge).
+- Talks to Scheduler (Phase 1) via **gRPC** to pick a node.
+- Talks to Node Agent (this phase, Section 4) via **gRPC** to actually
+  create the database on that node.
+- Talks to Metadata Service via **gRPC** to persist the outcome.
 - Owns retry logic when a chosen node fails mid-provision.
 
-### 3.2 API Surface
+### 3.2 External (client-facing) API — REST, unchanged in shape
 
 | Method | Path                      | Purpose                                  |
 |--------|----------------------------|--------------------------------------------|
@@ -78,36 +86,86 @@ the code layout, not just conceptually.
 }
 ```
 
-### 3.3 The Create Flow (must match this exact sequence — it's the phase's
+### 3.3 Internal API — gRPC (this is what actually changed)
+
+Define in `proto/control_plane.proto` (or reuse/extend `proto/scheduler.proto`
+and `proto/node_agent.proto` from Phase 1 where applicable):
+
+```protobuf
+// Control Plane → Scheduler (Scheduler service defined in Phase 1,
+// reused here — do not redefine, just consume it)
+rpc ScheduleDatabase(ScheduleRequest) returns (ScheduleResponse);
+
+message ScheduleRequest {
+  string cluster_id = 1;
+}
+message ScheduleResponse {
+  string node_id = 2;
+  double score = 3;
+}
+
+// Control Plane → Node Agent (new in this phase)
+service NodeAgent {
+  rpc CreateDatabase(CreateDatabaseRequest) returns (CreateDatabaseResponse);
+  rpc DeleteDatabase(DeleteDatabaseRequest) returns (DeleteDatabaseResponse);
+  rpc BackupDatabase(BackupDatabaseRequest) returns (BackupDatabaseResponse);   // stub, see 4.3
+  rpc RestoreDatabase(RestoreDatabaseRequest) returns (RestoreDatabaseResponse); // stub, see 4.3
+}
+
+message CreateDatabaseRequest {
+  string name = 1;
+  string database_id = 2;
+}
+message CreateDatabaseResponse {
+  bool success = 1;
+  string endpoint = 2;
+  string error = 3;
+}
+
+// Control Plane → Metadata Service (extends Phase 1's metadata gRPC
+// service with database/replica write paths)
+rpc UpdateDatabaseStatus(UpdateDatabaseStatusRequest) returns (UpdateDatabaseStatusResponse);
+```
+
+Keep `.proto` files under a shared `proto/` directory at repo root so all
+Go services generate from the same source of truth — do not let each
+service maintain its own divergent copy.
+
+### 3.4 The Create Flow (must match this exact sequence — it's the phase's
 core deliverable, per the original spec)
 
 ```
-Receive request
+Receive request (REST, client-facing)
      ↓
 Validate (name non-empty, cluster exists, cluster has ≥1 healthy node)
      ↓
 Choose cluster (from request; validate it exists)
      ↓
-Choose node (call Scheduler's placement API from Phase 1)
+Choose node (gRPC call: Scheduler.ScheduleDatabase)
      ↓
-Provision (call chosen Node Agent's Create Database RPC)
+Provision (gRPC call: NodeAgent.CreateDatabase on chosen node)
      ↓
-   ├─ success → Update metadata (status=active, nodeId=chosen) → Return success
+   ├─ success → Update metadata (gRPC: MetadataService.UpdateDatabaseStatus,
+   │              status=active, nodeId=chosen) → Return success (REST)
    └─ failure/timeout → Mark node as suspect, retry: choose next node,
                           provision again (max 3 attempts total)
                           → if all attempts exhausted: status=failed,
-                            update metadata, return error
+                            update metadata, return error (REST)
 ```
 
 Implement this as an explicit state machine or a clearly sequential
 function — do not scatter retry logic across callbacks in a way that's
 hard to trace. This flow is what gets whiteboarded in interviews; it needs
-to be legible in the code.
+to be legible in the code, and the REST-in/gRPC-out boundary should be
+obvious at a glance (e.g., a thin HTTP handler that immediately calls into
+a gRPC-calling orchestrator function — don't mix HTTP and gRPC concerns in
+the same function).
 
-### 3.4 Timeout & Retry Parameters
+### 3.5 Timeout & Retry Parameters
 Pick concrete values and write them down (these are starting defaults, not
 benchmarked — same caveat as Phase 1's health thresholds):
-- Provision call timeout: 10s per attempt
+- Provision gRPC call timeout: 10s per attempt (use gRPC's built-in
+  deadline propagation via `context.WithTimeout`, not a manual timer)
 - Max attempts: 3
 - Backoff between attempts: none required for Phase 2 (nodes are either up
   or down in this simulated environment — no need for exponential backoff
@@ -122,14 +180,16 @@ Runs as a sidecar/companion process alongside each Worker Node from
 Phase 1 (same process is acceptable — extend the Phase 1 worker rather
 than standing up a fully separate binary, unless that gets awkward).
 
-Exposes a small RPC surface that the Control Plane calls:
+Exposes a **gRPC** service (`NodeAgent`, Section 3.3) that the Control
+Plane calls — no REST anywhere in this service, it has no external
+clients.
 
-| RPC / Endpoint          | Purpose                                          |
+| RPC                          | Purpose                                          |
 |---------------------------|----------------------------------------------------|
-| `CreateDatabase(name)`     | Allocates storage, registers the DB locally         |
-| `DeleteDatabase(id)`       | Removes a database from this node                    |
-| `BackupDatabase(id)`        | **Stub only in this phase** — see Section 4.3        |
-| `RestoreDatabase(id, snap)` | **Stub only in this phase** — see Section 4.3        |
+| `CreateDatabase`     | Allocates storage, registers the DB locally         |
+| `DeleteDatabase`       | Removes a database from this node                    |
+| `BackupDatabase`        | **Stub only in this phase** — see Section 4.3        |
+| `RestoreDatabase` | **Stub only in this phase** — see Section 4.3        |
 
 ### 4.2 What "Create Database" Actually Does in Phase 2
 There is no real storage engine yet (that's Phase 3). So `CreateDatabase`
@@ -147,13 +207,13 @@ placeholder that Phase 3 will slot a real storage engine underneath
 without changing this RPC's contract.
 
 ### 4.3 Backup/Restore — Stay Stubs in This Phase (explicit decision)
-Backup/restore are **intentionally left as stubs** (return
-`not_implemented` or a fixed mock response) in Phase 2. Real snapshot-based
-backup requires the WAL/snapshot mechanism from Phase 3 to exist first —
-building it now would mean throwing it away and rebuilding it properly
-once Phase 3 lands. Revisit as a **Phase 3 extension** once storage engine
-snapshots exist; do not treat this as final scope, just correct
-sequencing.
+Backup/restore are **intentionally left as stubs** (return an
+`UNIMPLEMENTED` gRPC status or a fixed mock response) in Phase 2. Real
+snapshot-based backup requires the WAL/snapshot mechanism from Phase 3 to
+exist first — building it now would mean throwing it away and rebuilding
+it properly once Phase 3 lands. Revisit as a **Phase 3 extension** (see
+`PHASE_3.md` Section 8) once storage engine snapshots exist; do not treat
+this as final scope, just correct sequencing.
 
 ---
 
@@ -161,7 +221,8 @@ sequencing.
 
 - The Control Plane must **never** hold placement decisions in its own
   memory as the source of truth — every state transition (`provisioning` →
-  `active`/`failed`) is written to the Metadata Service immediately.
+  `active`/`failed`) is written to the Metadata Service (via gRPC)
+  immediately.
 - If the Control Plane crashes mid-provision, on restart it must be able
   to reconcile: query Metadata Service for any database stuck in
   `provisioning` past a reasonable timeout, and either retry or mark
@@ -176,8 +237,8 @@ sequencing.
 ## 6. Failure Injection (required for testing retries)
 
 The Node Agent needs a way to simulate provisioning failure so the retry
-path in Section 3.3 is actually exercised, not just theorized:
-- A debug flag/endpoint on the Node Agent to force the next N
+path in Section 3.4 is actually exercised, not just theorized:
+- A debug gRPC method or config flag on the Node Agent to force the next N
   `CreateDatabase` calls to fail or hang past timeout.
 - This is a test-only mechanism — document clearly in the Node Agent's
   README that it must never be enabled outside test environments.
@@ -194,14 +255,18 @@ path in Section 3.3 is actually exercised, not just theorized:
   infinite loop.
 - Node Agent: CreateDatabase allocates a unique namespace per call, rejects
   duplicate database names on the same node.
+- gRPC layer: use in-process gRPC test servers (bufconn in Go) for unit
+  tests rather than spinning up real network listeners — faster and more
+  reliable.
 
 ### 7.2 Integration Test (required — this is the phase's acceptance proof)
 Using the Phase 1 integration test setup (Metadata Service + 3 worker
-nodes) plus the new Control Plane and Node Agents:
+nodes, all communicating over gRPC) plus the new Control Plane and Node
+Agents:
 
-1. **Happy path:** `POST /v1/databases` with a valid request → assert
-   response eventually shows `status: active` with a `nodeId` pointing at
-   a real, healthy node.
+1. **Happy path:** `POST /v1/databases` (REST, client-facing) with a valid
+   request → assert response eventually shows `status: active` with a
+   `nodeId` pointing at a real, healthy node.
 2. **Retry path:** enable failure injection on the node the Scheduler is
    expected to pick first → `POST /v1/databases` → assert it retries onto
    a different node and still ends in `status: active`. This directly
@@ -224,8 +289,9 @@ nodes) plus the new Control Plane and Node Agents:
 - [ ] Node Agent and Control Plane each have a README (what it does, how
       to run it, known gaps — explicitly list backup/restore as stubbed
       pending Phase 3)
-- [ ] `docs/decisions/` updated with: RPC framework choice reused/confirmed
-      from Phase 1, timeout/retry constants and rationale
+- [ ] `docs/decisions/` confirms gRPC usage here is consistent with
+      `internal-rpc-choice.md` from Phase 1 — no new decision needed,
+      just confirm no drift occurred
 - [ ] `PROJECT_STATUS.md` updated to mark Phase 2 complete with a summary
 
 ---
@@ -236,26 +302,30 @@ nodes) plus the new Control Plane and Node Agents:
 - Real backup/restore (deferred to a Phase 3 extension — see Section 4.3)
 - Multi-region-aware scheduling (Phase 4)
 - Metrics/tracing beyond `/health` (Phase 5)
-- Auth on any endpoint (Phase 8) — these APIs remain unauthenticated in
-  dev for now, note this clearly as a known gap, not an oversight
+- Auth on any endpoint (Phase 8) — these APIs (both REST edge and internal
+  gRPC) remain unauthenticated in dev for now, note this clearly as a
+  known gap, not an oversight
 
 ---
 
 ## 9. Suggested Build Order (within this phase)
 
 1. Extend Metadata Service: activate `databases`/`replicas` tables with
-   real read/write paths (they were schema-only placeholders in Phase 1).
-2. Node Agent: `CreateDatabase`/`DeleteDatabase` (real logic per Section
+   real read/write paths (they were schema-only placeholders in Phase 1),
+   exposed via new gRPC RPCs (`UpdateDatabaseStatus`, etc.).
+2. Define `proto/node_agent.proto` and generate stubs.
+3. Node Agent: `CreateDatabase`/`DeleteDatabase` (real logic per Section
    4.2), `BackupDatabase`/`RestoreDatabase` (stubs per Section 4.3), plus
-   the failure-injection debug hook (Section 6).
-3. Control Plane: validation logic, Scheduler integration (reuse Phase 1
-   API, no changes there), Node Agent RPC client.
-4. Control Plane: retry logic + state machine (Section 3.3).
-5. Control Plane: reconciliation loop for crash recovery (Section 5).
-6. Integration test — all 4 scenarios in Section 7.2. This is the phase's
+   the failure-injection debug hook (Section 6) — all gRPC.
+4. Control Plane: REST handler layer (client-facing), validation logic,
+   Scheduler gRPC client (reuse Phase 1 proto, no changes there), Node
+   Agent gRPC client.
+5. Control Plane: retry logic + state machine (Section 3.4).
+6. Control Plane: reconciliation loop for crash recovery (Section 5).
+7. Integration test — all 4 scenarios in Section 7.2. This is the phase's
    real milestone.
-7. Benchmarks + READMEs + decision docs + `PROJECT_STATUS.md` update —
-   close out the phase.
+8. Benchmarks + READMEs + `PROJECT_STATUS.md` update — close out the
+   phase.
 
 Work through these one at a time. After each numbered step, report status
 before moving to the next, per the working agreement in `GEMINI.md`.
