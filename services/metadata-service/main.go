@@ -58,6 +58,10 @@ func main() {
 	defer pool.Close()
 	slog.Info("database connection pool established")
 
+	// Initialize and start the Health Manager background daemon (checks every 2 seconds)
+	hm := db.NewHealthManager(pool, 2*time.Second)
+	go hm.Start(ctx)
+
 	// Register HTTP routes
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handlers.HealthHandler(pool))
