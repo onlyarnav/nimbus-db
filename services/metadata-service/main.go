@@ -65,6 +65,7 @@ func main() {
 	// Register HTTP routes
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handlers.HealthHandler(pool))
+	mux.HandleFunc("/v1/nodes", handlers.NodesHandler(pool))
 
 	// Setup HTTP server with robust timeouts
 	serverAddr := fmt.Sprintf(":%s", cfg.Port)
