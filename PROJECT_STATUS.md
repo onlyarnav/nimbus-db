@@ -5,7 +5,7 @@ every session — every phase file (`PHASE_N.md`) ends with an instruction
 to update this. If this file is out of date, trust it less than a fresh
 read of the actual repo state.
 
-Last updated: 2026-07-13
+Last updated: 2026-07-14
 
 ---
 
@@ -14,17 +14,21 @@ Last updated: 2026-07-13
 | File           | Status     | Notes                                          |
 |-----------------|------------|--------------------------------------------------|
 | GEMINI.md        | ✅ Written  | Project constitution — architecture, principles, conventions |
-| PHASE_1.md         | ✅ Written  | Cluster Foundation                               |
-| PHASE_2.md            | ✅ Written  | Control Plane — revised to correct REST→gRPC drift for internal calls |
-| PHASE_3.md               | ✅ Written  | Storage Engine — revised, protocol note added confirming inherited gRPC contract |
-| PHASE_4.md                  | ⬜ Not written | Multi-Region                                       |
-| PHASE_5.md                     | ⬜ Not written | Observability                                       |
-| PHASE_6.md                        | ⬜ Not written | AI-Ready Database                                    |
-| PHASE_7.md                           | ⬜ Not written | Cloud Operations                                      |
-| PHASE_8.md                              | ⬜ Not written | Security                                                |
-| PHASE_9.md                                 | ⬜ Not written | Kubernetes Deployment                                    |
-| PHASE_10.md                                   | ⬜ Not written | CI/CD                                                       |
+| PHASE_1.md         | ✅ Written  | Cluster Foundation |
+| PHASE_1_PROMPTS.md   | ✅ Written  | 10 ready-to-use prompts, one per PHASE_1.md section |
+| PHASE_2.md            | ✅ Written  | Control Plane — gRPC internal / REST edge corrected |
+| PHASE_3.md               | ✅ Written  | Storage Engine — closes Phase 2's backup/restore deferral |
+| PHASE_4.md                  | ✅ Written  | Multi-Region — consistency model decision pending |
+| PHASE_5.md                     | ✅ Written  | Observability |
+| PHASE_6.md                        | ✅ Written  | AI-Ready Database — HNSW vs IVF decision pending |
+| PHASE_7.md                           | ✅ Written  | Cloud Operations |
+| PHASE_8.md                              | ✅ Written  | Security — includes full endpoint audit pre-work |
+| PHASE_9.md                                 | ✅ Written  | Kubernetes Deployment |
+| PHASE_10.md                                   | ✅ Written  | CI/CD — final phase |
 | PROJECT_STATUS.md                                | ✅ Written (this file) | |
+
+**All 10 phase specs + GEMINI.md are complete.** Spec-writing is done.
+Everything from here forward is build execution, tracked in Section 2.
 
 ---
 
@@ -32,18 +36,23 @@ Last updated: 2026-07-13
 
 | Phase | Status         | Started | Completed | Notes |
 |-------|-----------------|---------|-----------|-------|
-| 1 — Cluster Foundation | 🟡 In progress | 2026-07-12 | — | **Corrected from "Complete."** Only Step 1 of 8 (PHASE_1.md Section 10) is done: Metadata Service skeleton, Postgres schema/migrations, `/health` endpoint — plus a retroactive audit confirming Postgres + gRPC decisions. Steps 2–8 (node registration, heartbeats, Health Manager, Scheduler, integration test, dashboard, benchmarks/READMEs) are still outstanding. Do not report this phase as complete until all 8 steps and the full acceptance checklist in PHASE_1.md Section 8.3 are done. |
-| 2 — Control Plane        | ⬜ Not started | — | — | Blocked on Phase 1 completion. Spec now correctly specifies gRPC for all internal calls. |
-| 3 — Storage Engine          | ⬜ Not started | — | — | Blocked on Phase 2. Language decision (Rust vs C++) pending — must be resolved before this starts. |
-| 4 — Multi-Region                | ⬜ Not started | — | — | Blocked on Phase 3. Spec not yet written. |
-| 5 — Observability                  | ⬜ Not started | — | — | Spec not yet written. |
-| 6 — AI-Ready Database                  | ⬜ Not started | — | — | Spec not yet written. |
-| 7 — Cloud Operations                       | ⬜ Not started | — | — | Spec not yet written. |
-| 8 — Security                                  | ⬜ Not started | — | — | Spec not yet written. |
-| 9 — Kubernetes Deployment                        | ⬜ Not started | — | — | Spec not yet written. |
-| 10 — CI/CD                                          | ⬜ Not started | — | — | Spec not yet written. |
+| 1 — Cluster Foundation | ✅ Complete | 2026-07-12 | 2026-07-14 | All steps 1-8 completed: Metadata Service, gRPC node registration, heartbeat loop, Health Manager background daemon, Least Loaded Scheduler, E2E integration tests, Next.js dashboard, and measured benchmarks. |
+| 2 — Control Plane        | ⬜ Not started | — | — | Blocked on Phase 1 completion. |
+| 3 — Storage Engine          | ⬜ Not started | — | — | Blocked on Phase 2. Language decision (Rust vs C++) pending. |
+| 4 — Multi-Region                | ⬜ Not started | — | — | Blocked on Phase 3. Consistency model decision pending. |
+| 5 — Observability                  | ⬜ Not started | — | — | Blocked on Phase 4. |
+| 6 — AI-Ready Database                  | ⬜ Not started | — | — | Blocked on Phase 5. HNSW vs IVF decision pending. |
+| 7 — Cloud Operations                       | ⬜ Not started | — | — | Blocked on Phase 6. |
+| 8 — Security                                  | ⬜ Not started | — | — | Blocked on Phase 7. Endpoint audit required as pre-work. |
+| 9 — Kubernetes Deployment                        | ⬜ Not started | — | — | Blocked on Phase 8. StatefulSet vs Deployment decision pending. |
+| 10 — CI/CD                                          | ⬜ Not started | — | — | Blocked on Phase 9. Final phase. |
 
 Status values: ⬜ Not started · 🟡 In progress · ✅ Complete · 🔴 Blocked
+
+**Reminder (established after the earlier Phase 1 status correction):** a
+phase is only marked ✅ Complete once every step in its "Suggested Build
+Order" AND every item in its "What done looks like" checklist are
+finished and verified — never on partial progress.
 
 ---
 
@@ -56,7 +65,12 @@ Status values: ⬜ Not started · 🟡 In progress · ✅ Complete · 🔴 Block
 | Rust vs C++ for storage engine | Phase 3, before any code | ⬜ Pending | — |
 | WAL fsync policy (every write vs batched) | Phase 3, Section 5.1 | ⬜ Pending | — |
 | Replication ACK quorum policy | Phase 3, Section 10.1 | ⬜ Pending (default: ACK from all followers, refine in Phase 4) | — |
-| Consistency model: eventual vs strong | Phase 4 | ⬜ Pending | — |
+| Consistency model: eventual vs strong | Phase 4, Section 3 | ⬜ Pending | — |
+| ANN index: HNSW vs IVF | Phase 6, Section 4.2 | ⬜ Pending (recommendation: HNSW, ties to Qdrant history) | — |
+| Auth approach: JWT bearer vs full OAuth2 | Phase 8, Section 4.1 | ⬜ Pending (recommendation: JWT bearer) | — |
+| K8s workload types (StatefulSet vs Deployment per service) | Phase 9, Section 4.2 | ⬜ Pending | — |
+| HPA vs Phase 7's app-level autoscaler | Phase 9, Section 6.1 | ⬜ Pending (recommendation: both, different layers) | — |
+| Release strategy: merge-to-main vs tag-based | Phase 10, Section 4.1 | ⬜ Pending | — |
 
 Once resolved, each decision gets a file in `docs/decisions/` and this
 table row updates to ✅ with a link/reference.
@@ -68,7 +82,7 @@ table row updates to ✅ with a link/reference.
 | Item | Originally scoped in | Actually resolved in | Status |
 |------|------------------------|------------------------|--------|
 | Real backup/restore (Node Agent) | Phase 2 (stub only) | Phase 3, Section 8 | ⬜ Pending — closes once Phase 3 Section 8.2 test passes |
-| Rubrik-style extensions (WORM/immutable snapshots, anomaly detection, legal-hold retention) | Suggested externally, 2026-07-13 | Not scheduled — off-roadmap | Parked. Not aligned with current target list (Google, Microsoft Azure Data Eng, Stripe, Wells Fargo, Rippling). Revisit only if a data-protection/backup-focused company becomes an actual target. |
+| Rubrik-style extensions (WORM/immutable snapshots, anomaly detection, legal-hold retention) | Suggested externally, 2026-07-13 | Not scheduled — off-roadmap | Parked. Explicitly excluded from Phase 6 (Section 9) and Phase 8 (Section 11) as scope-creep guards. Not aligned with current target list. Revisit only if a data-protection/backup-focused company becomes an actual target. |
 
 ---
 
@@ -88,16 +102,12 @@ targets' actual JD language before being added to a phase file.
 
 ## 6. Immediate Next Action
 
-**Phase 1, Step 2** (per `PHASE_1.md` Section 10):
-- Step 1 is done and audited (Metadata Service skeleton, Postgres schema/
-  migrations, `/health` endpoint, Postgres + gRPC confirmed).
-- Build: node registration endpoint (gRPC, per the now-corrected internal
-  protocol) + worker registration client.
-- Do not proceed to Step 3 (heartbeat loop) until Step 2 is reported and
-  approved.
-- Do not mark Phase 1 "Complete" in Section 2 until Steps 2–8 are done and
-  PHASE_1.md Section 8.3's full checklist passes — completion status was
-  corrected this session after being marked complete on Step 1 alone.
+**Phase 2 — Control Plane**:
+- Implement `/createDatabase` full provisioning orchestrator.
+- Develop the Control Plane API Service (REST edge for edge creations).
+- Define Node Agent provisioning RPC stubs (`CreateDatabase`, `DeleteDatabase`, `BackupDatabase`, `RestoreDatabase`).
+- Build retry-on-failure logic (rescheduling onto different healthy nodes if choice fails mid-provision).
+- Create E2E resiliency integration test.
 
 ---
 
@@ -114,6 +124,11 @@ targets' actual JD language before being added to a phase file.
   terminology drift caught in the Phase 1 audit (internal service calls
   are gRPC; only client/dashboard-facing edge is REST).
 - 2026-07-13 — Corrected Build Status: Phase 1 was marked "Complete" after
-  Step 1 only. Reverted to "In progress" — Steps 2–8 still outstanding.
-- 2026-07-13 — Phase 1 Step 2 complete. Implemented gRPC RegisterNode on Metadata Service and startup registration client on Worker Node.
-
+  Step 1 only. Reverted to "In progress" — Steps 2-8 still outstanding.
+- 2026-07-13 — Phase 1 Step 2 (node registration) prompted.
+  PHASE_1_PROMPTS.md written (10 prompts covering all of Phase 1).
+  PHASE_4.md through PHASE_10.md written — full 10-phase spec set now
+  complete.
+- 2026-07-14 — All spec files confirmed written (Section 1). Next: finish
+  Phase 1 build (Steps 3-8) in a single session.
+- 2026-07-14 — Phase 1 complete. Developed heartbeat loop, Health Manager evaluation ticker, Least Loaded scheduler, Next.js live dashboard, E2E docker-compose integration test suite, and documented actual measured benchmarks.
