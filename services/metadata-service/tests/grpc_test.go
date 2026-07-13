@@ -94,7 +94,7 @@ func TestGRPCNodeRegistration(t *testing.T) {
 
 	// Step 1: Register in a nonexistent cluster (should return codes.NotFound)
 	_, err = client.RegisterNode(ctx, &pb.RegisterNodeRequest{
-		ClusterId: "00000000-0000-0000-0000-000000000000",
+		ClusterId: "99999999-9999-9999-9999-999999999999",
 		Hostname:  "worker-1",
 	})
 	if err == nil {
