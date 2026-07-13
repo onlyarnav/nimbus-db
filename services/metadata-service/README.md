@@ -6,13 +6,17 @@ The Metadata Service is the central control-plane repository and single source o
 
 - Database schema management and migrations.
 - Liveness check (`/health` probe).
-- *Future*: Registering worker nodes, tracking resource usages, identifying node failures, and selecting candidates for data distribution.
+- Worker node registration (`RegisterNode` gRPC API).
+- Periodic heartbeat processing (`SendHeartbeat` gRPC API).
+- Cluster health and state classification (`HealthManager` background daemon checking every 2 seconds).
+- Exposing topology listings (`GetNodes` gRPC and REST `/v1/nodes` API).
 
 ## Tech Stack & Decisions
 
-- **Language**: Go 1.22.12
+- **Language**: Go 1.25.0
 - **Database**: PostgreSQL (native UUIDs via `gen_random_uuid()`)
-- **Internal API**: gRPC (to be built in later steps)
+- **Internal API**: gRPC (listening on port `50051`)
+- **Dashboard API**: REST/JSON (listening on port `8080`)
 - **Migrations**: managed programmatically using `golang-migrate/migrate/v4` (using embedded SQL files in main, or standard file loader in tests)
 - **Database Client**: `github.com/jackc/pgx/v5` connection pool
 
@@ -20,8 +24,8 @@ The Metadata Service is the central control-plane repository and single source o
 
 ### Prerequisites
 
-- Go 1.22+
-- Running PostgreSQL database (defaults to `postgres://postgres:postgres@localhost:5432/nimbusdb?sslmode=disable`)
+- Go 1.25+
+- Running PostgreSQL database (defaults to `postgres://postgres:password@localhost:5432/nimbusdb?sslmode=disable`)
 
 To start a local Postgres database:
 ```bash
@@ -32,15 +36,16 @@ docker compose -f ../../deploy/docker/docker-compose.yml up -d
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgres://postgres:postgres@localhost:5432/nimbusdb?sslmode=disable` |
-| `PORT` | HTTP Server port | `8080` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgres://postgres:password@localhost:5432/nimbusdb?sslmode=disable` |
+| `PORT` | HTTP REST Server port | `8080` |
+| `GRPC_PORT` | gRPC Server port | `50051` |
 
 ### Running the Service
 
-The service automatically applies all schema migrations on startup.
+The service automatically applies all schema migrations and seeds default regions/clusters on startup.
 
 ```bash
-DATABASE_URL="postgres://postgres:postgres@localhost:5432/nimbusdb?sslmode=disable" PORT=8080 go run main.go
+DATABASE_URL="postgres://postgres:password@localhost:5432/nimbusdb?sslmode=disable" PORT=8080 GRPC_PORT=50051 go run main.go
 ```
 
 Verify service is running:
@@ -48,15 +53,11 @@ Verify service is running:
 curl http://localhost:8080/health
 ```
 
-Output:
-```json
-{"status":"UP","database":"connected"}
-```
-
 ### Running Tests
 
 To run the unit and integration-level schema tests:
 ```bash
+$env:DATABASE_URL="postgres://postgres:password@localhost:5432/nimbusdb?sslmode=disable"
 go test -v ./...
 ```
 
@@ -64,10 +65,6 @@ go test -v ./...
 
 ## Known Gaps (Not Yet Implemented)
 
-As this is the initial skeleton (Phase 1, Step 1), the following features are deliberately **not** built yet:
-- **Node Registration**: `POST /v1/nodes/register` (Step 2)
-- **Heartbeat Ingestion**: `POST /v1/nodes/{id}/heartbeat` (Step 3)
-- **Health Manager**: Detecting dead, slow, or overloaded nodes (Step 4)
-- **Scheduler**: Least Loaded placement algorithm (Step 5)
-- **Cluster/Region CRUD**: endpoints for clusters and regions management
-- **Dashboard APIs**: listing nodes/clusters for Next.js UI consumption (Step 7)
+- **Database Provisioning**: Actual logical databases are not provisioned (Phase 2).
+- **Storage Engine**: Actual page data/WAL processing does not exist (Phase 3).
+- **Multi-Region**: Cross-region latency and consistency routing are stubbed/deferred (Phase 4).

@@ -6,14 +6,17 @@ This service is the simulated node agent running on worker hosts. It interacts w
 
 - Connects to the Metadata Service via gRPC on startup.
 - Registers itself to a specific database cluster using the `RegisterNode` API.
-- Stores the returned Node ID locally.
-- *Future*: Periodic health heartbeat loop (sending synthetic CPU/RAM/Disk stats), handling database provisioning stubs (Create/Delete/Backup/Restore).
+- Runs a 5-second random-walk health heartbeat loop (`SendHeartbeat` gRPC API) reporting:
+  - CPU Usage %
+  - Memory Usage %
+  - Disk Space %
+- Hosts a debug HTTP server (listening on port `8081` by default) to pause and resume heartbeats for E2E failure testing.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Go 1.22+
+- Go 1.25+
 - Running Metadata Service gRPC server (defaults to port `50051`).
 
 ### Environment Variables
@@ -23,26 +26,23 @@ This service is the simulated node agent running on worker hosts. It interacts w
 | `METADATA_GRPC_ADDR` | Metadata Service gRPC address | `localhost:50051` |
 | `CLUSTER_ID` | UUID of the cluster to register with | `00000000-0000-0000-0000-000000000000` |
 | `HOSTNAME` | Name of the worker node | `worker-local` |
+| `DEBUG_PORT` | Port for the HTTP debug control endpoints | `8081` |
 
 ### Running the Worker Node
 
 ```bash
-METADATA_GRPC_ADDR="localhost:50051" CLUSTER_ID="<VALID_CLUSTER_UUID>" HOSTNAME="worker-1" go run main.go
+METADATA_GRPC_ADDR="localhost:50051" CLUSTER_ID="00000000-0000-0000-0000-000000000000" HOSTNAME="worker-1" DEBUG_PORT=8081 go run main.go
 ```
 
-Logs will output:
-```json
-{"time":"2026-07-13T02:15:00.000Z","level":"INFO","msg":"starting nimbusdb worker node"}
-{"time":"2026-07-13T02:15:00.000Z","level":"INFO","msg":"connecting to metadata service","address":"localhost:50051"}
-{"time":"2026-07-13T02:15:00.000Z","level":"INFO","msg":"registering node with metadata service","cluster_id":"<VALID_CLUSTER_UUID>","hostname":"worker-1"}
-{"time":"2026-07-13T02:15:00.000Z","level":"INFO","msg":"node registered successfully","node_id":"<RETURNED_NODE_UUID>","heartbeat_interval_seconds":5}
-{"time":"2026-07-13T02:15:00.000Z","level":"INFO","msg":"worker node is running, waiting for signal..."}
-```
+### Debug Endpoints
 
----
+You can simulate node failure or recovery by pausing or resuming the heartbeat loop:
 
-## Known Gaps (Not Yet Implemented)
-
-- **Heartbeat loop**: Periodic statistics sending (every 5 seconds) is deferred (Step 3).
-- **Provisions handlers**: Stub APIs for backup, restore, database layout adjustments are deferred (Phase 2).
-- **Graceful deregister**: Deregistering the node from metadata cluster state on shutdown (SIGTERM).
+- **Pause Heartbeats**:
+  ```bash
+  curl -X POST http://localhost:8081/debug/pause
+  ```
+- **Resume Heartbeats**:
+  ```bash
+  curl -X POST http://localhost:8081/debug/resume
+  ```
