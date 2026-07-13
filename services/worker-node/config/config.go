@@ -9,6 +9,7 @@ type Config struct {
 	MetadataGRPCAddr string
 	ClusterID        string
 	Hostname         string
+	DebugPort        string
 }
 
 // Load loads the configuration from environment variables.
@@ -25,9 +26,14 @@ func Load() *Config {
 	if hostname == "" {
 		hostname = "worker-local"
 	}
+	debugPort := os.Getenv("DEBUG_PORT")
+	if debugPort == "" {
+		debugPort = "8081"
+	}
 	return &Config{
 		MetadataGRPCAddr: addr,
 		ClusterID:        clusterID,
 		Hostname:         hostname,
+		DebugPort:        debugPort,
 	}
 }
