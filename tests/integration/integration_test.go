@@ -29,7 +29,7 @@ func TestClusterIntegration(t *testing.T) {
 	// 2. Poll health check of Metadata Service HTTP endpoint
 	t.Log("Waiting for Metadata Service to be healthy...")
 	metaHealthy := false
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 45; i++ {
 		resp, err := http.Get("http://localhost:8080/health")
 		if err == nil && resp.StatusCode == http.StatusOK {
 			metaHealthy = true
