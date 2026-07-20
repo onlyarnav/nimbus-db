@@ -182,3 +182,264 @@ func (s *Server) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.Get
 
 	return &pb.GetNodesResponse{Nodes: nodes}, nil
 }
+
+// CreateDatabaseRecord inserts a new database and leader replica into the registry.
+func (s *Server) CreateDatabaseRecord(ctx context.Context, req *pb.CreateDatabaseRecordRequest) (*pb.CreateDatabaseRecordResponse, error) {
+	name := req.GetName()
+	clusterID := req.GetClusterId()
+	nodeID := req.GetNodeId()
+	statusStr := req.GetStatus()
+	attempts := req.GetAttempts()
+
+	if name == "" || clusterID == "" || statusStr == "" {
+		return nil, status.Error(codes.InvalidArgument, "name, cluster_id, and status are required")
+	}
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to start transaction", "error", err)
+		return nil, status.Errorf(codes.Internal, "transaction failed: %v", err)
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	var dbID string
+	var insertQuery string
+	var args []interface{}
+
+	if nodeID != "" {
+		insertQuery = `INSERT INTO databases (name, cluster_id, node_id, status, attempts, created_at, updated_at)
+		               VALUES ($1, $2, $3, $4, $5, now(), now()) RETURNING id`
+		args = []interface{}{name, clusterID, nodeID, statusStr, attempts}
+	} else {
+		insertQuery = `INSERT INTO databases (name, cluster_id, status, attempts, created_at, updated_at)
+		               VALUES ($1, $2, $3, $4, now(), now()) RETURNING id`
+		args = []interface{}{name, clusterID, statusStr, attempts}
+	}
+
+	err = tx.QueryRow(ctx, insertQuery, args...).Scan(&dbID)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to insert database record", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to insert database: %v", err)
+	}
+
+	// If node ID is provided, insert a leader replica
+	if nodeID != "" {
+		repQuery := `INSERT INTO replicas (database_id, node_id, role) VALUES ($1, $2, 'leader')`
+		_, err = tx.Exec(ctx, repQuery, dbID, nodeID)
+		if err != nil {
+			slog.ErrorContext(ctx, "failed to insert leader replica", "error", err)
+			return nil, status.Errorf(codes.Internal, "failed to insert replica: %v", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		slog.ErrorContext(ctx, "failed to commit transaction", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to commit: %v", err)
+	}
+
+	return &pb.CreateDatabaseRecordResponse{DatabaseId: dbID}, nil
+}
+
+// UpdateDatabaseStatus updates database metadata (status, node_id, endpoint, attempts).
+func (s *Server) UpdateDatabaseStatus(ctx context.Context, req *pb.UpdateDatabaseStatusRequest) (*pb.UpdateDatabaseStatusResponse, error) {
+	dbID := req.GetDatabaseId()
+	statusStr := req.GetStatus()
+	nodeID := req.GetNodeId()
+	endpoint := req.GetEndpoint()
+	attempts := req.GetAttempts()
+
+	if dbID == "" || statusStr == "" {
+		return nil, status.Error(codes.InvalidArgument, "database_id and status are required")
+	}
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to start transaction", "error", err)
+		return nil, status.Errorf(codes.Internal, "transaction failed: %v", err)
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	// Update database details. If nodeID is empty, we don't update node_id.
+	var updateQuery string
+	var args []interface{}
+	if nodeID != "" {
+		updateQuery = `UPDATE databases
+		               SET status = $1, node_id = $2, endpoint = $3, attempts = $4, updated_at = now()
+		               WHERE id = $5`
+		args = []interface{}{statusStr, nodeID, endpoint, attempts, dbID}
+	} else {
+		updateQuery = `UPDATE databases
+		               SET status = $1, endpoint = $2, attempts = $3, updated_at = now()
+		               WHERE id = $4`
+		args = []interface{}{statusStr, endpoint, attempts, dbID}
+	}
+
+	cmd, err := tx.Exec(ctx, updateQuery, args...)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to update database status", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to update database status: %v", err)
+	}
+	if cmd.RowsAffected() == 0 {
+		return nil, status.Errorf(codes.NotFound, "database %q not found", dbID)
+	}
+
+	// Update leader replica if nodeID changed/is updated
+	if nodeID != "" {
+		// Delete any existing replicas for this database and insert the new leader
+		_, err = tx.Exec(ctx, `DELETE FROM replicas WHERE database_id = $1`, dbID)
+		if err != nil {
+			slog.ErrorContext(ctx, "failed to clear replicas", "error", err)
+			return nil, status.Errorf(codes.Internal, "failed to clear replicas: %v", err)
+		}
+
+		repQuery := `INSERT INTO replicas (database_id, node_id, role) VALUES ($1, $2, 'leader')`
+		_, err = tx.Exec(ctx, repQuery, dbID, nodeID)
+		if err != nil {
+			slog.ErrorContext(ctx, "failed to update leader replica", "error", err)
+			return nil, status.Errorf(codes.Internal, "failed to update replica: %v", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		slog.ErrorContext(ctx, "failed to commit transaction", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to commit: %v", err)
+	}
+
+	return &pb.UpdateDatabaseStatusResponse{Success: true}, nil
+}
+
+// GetDatabase retrieves info for a specific database.
+func (s *Server) GetDatabase(ctx context.Context, req *pb.GetDatabaseRequest) (*pb.GetDatabaseResponse, error) {
+	dbID := req.GetDatabaseId()
+	if dbID == "" {
+		return nil, status.Error(codes.InvalidArgument, "database_id is required")
+	}
+
+	query := `SELECT id, name, cluster_id, node_id, status, endpoint, attempts, created_at, updated_at
+	          FROM databases WHERE id = $1`
+	var dbInfo pb.DatabaseInfo
+	var nodeID *string
+	var endpoint *string
+	var regAt, upAt time.Time
+
+	err := s.db.QueryRow(ctx, query, dbID).Scan(
+		&dbInfo.Id, &dbInfo.Name, &dbInfo.ClusterId, &nodeID, &dbInfo.Status, &endpoint, &dbInfo.Attempts, &regAt, &upAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "database %q not found", dbID)
+		}
+		slog.ErrorContext(ctx, "failed to fetch database record", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to fetch database: %v", err)
+	}
+
+	if nodeID != nil {
+		dbInfo.NodeId = *nodeID
+	}
+	if endpoint != nil {
+		dbInfo.Endpoint = *endpoint
+	}
+	dbInfo.CreatedAt = regAt.Format(time.RFC3339)
+	dbInfo.UpdatedAt = upAt.Format(time.RFC3339)
+
+	return &pb.GetDatabaseResponse{Database: &dbInfo}, nil
+}
+
+// ListDatabases lists all registered databases, optionally filtering by cluster_id.
+func (s *Server) ListDatabases(ctx context.Context, req *pb.ListDatabasesRequest) (*pb.ListDatabasesResponse, error) {
+	clusterID := req.GetClusterId()
+
+	var rows pgx.Rows
+	var err error
+
+	if clusterID != "" {
+		query := `SELECT id, name, cluster_id, node_id, status, endpoint, attempts, created_at, updated_at
+		          FROM databases WHERE cluster_id = $1`
+		rows, err = s.db.Query(ctx, query, clusterID)
+	} else {
+		query := `SELECT id, name, cluster_id, node_id, status, endpoint, attempts, created_at, updated_at
+		          FROM databases`
+		rows, err = s.db.Query(ctx, query)
+	}
+
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to query databases", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to list databases: %v", err)
+	}
+	defer rows.Close()
+
+	var list []*pb.DatabaseInfo
+	for rows.Next() {
+		var dbInfo pb.DatabaseInfo
+		var nodeID *string
+		var endpoint *string
+		var regAt, upAt time.Time
+
+		err := rows.Scan(
+			&dbInfo.Id, &dbInfo.Name, &dbInfo.ClusterId, &nodeID, &dbInfo.Status, &endpoint, &dbInfo.Attempts, &regAt, &upAt,
+		)
+		if err != nil {
+			slog.ErrorContext(ctx, "failed to scan database row", "error", err)
+			return nil, status.Errorf(codes.Internal, "failed to scan databases list: %v", err)
+		}
+
+		if nodeID != nil {
+			dbInfo.NodeId = *nodeID
+		}
+		if endpoint != nil {
+			dbInfo.Endpoint = *endpoint
+		}
+		dbInfo.CreatedAt = regAt.Format(time.RFC3339)
+		dbInfo.UpdatedAt = upAt.Format(time.RFC3339)
+
+		list = append(list, &dbInfo)
+	}
+
+	return &pb.ListDatabasesResponse{Databases: list}, nil
+}
+
+// DeleteDatabaseRecord removes database and associated replica metadata.
+func (s *Server) DeleteDatabaseRecord(ctx context.Context, req *pb.DeleteDatabaseRecordRequest) (*pb.DeleteDatabaseRecordResponse, error) {
+	dbID := req.GetDatabaseId()
+	if dbID == "" {
+		return nil, status.Error(codes.InvalidArgument, "database_id is required")
+	}
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to start transaction", "error", err)
+		return nil, status.Errorf(codes.Internal, "transaction failed: %v", err)
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	// Delete from replicas first
+	_, err = tx.Exec(ctx, `DELETE FROM replicas WHERE database_id = $1`, dbID)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to delete replicas", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to delete database replicas: %v", err)
+	}
+
+	cmd, err := tx.Exec(ctx, `DELETE FROM databases WHERE id = $1`, dbID)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to delete database record", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to delete database: %v", err)
+	}
+
+	if cmd.RowsAffected() == 0 {
+		return nil, status.Errorf(codes.NotFound, "database %q not found", dbID)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		slog.ErrorContext(ctx, "failed to commit transaction", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to commit: %v", err)
+	}
+
+	return &pb.DeleteDatabaseRecordResponse{Success: true}, nil
+}
+
