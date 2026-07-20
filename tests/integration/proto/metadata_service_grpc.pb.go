@@ -19,9 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MetadataService_RegisterNode_FullMethodName  = "/metadata.MetadataService/RegisterNode"
-	MetadataService_SendHeartbeat_FullMethodName = "/metadata.MetadataService/SendHeartbeat"
-	MetadataService_GetNodes_FullMethodName      = "/metadata.MetadataService/GetNodes"
+	MetadataService_RegisterNode_FullMethodName         = "/metadata.MetadataService/RegisterNode"
+	MetadataService_SendHeartbeat_FullMethodName        = "/metadata.MetadataService/SendHeartbeat"
+	MetadataService_GetNodes_FullMethodName             = "/metadata.MetadataService/GetNodes"
+	MetadataService_CreateDatabaseRecord_FullMethodName = "/metadata.MetadataService/CreateDatabaseRecord"
+	MetadataService_UpdateDatabaseStatus_FullMethodName = "/metadata.MetadataService/UpdateDatabaseStatus"
+	MetadataService_GetDatabase_FullMethodName          = "/metadata.MetadataService/GetDatabase"
+	MetadataService_ListDatabases_FullMethodName        = "/metadata.MetadataService/ListDatabases"
+	MetadataService_DeleteDatabaseRecord_FullMethodName = "/metadata.MetadataService/DeleteDatabaseRecord"
 )
 
 // MetadataServiceClient is the client API for MetadataService service.
@@ -34,6 +39,16 @@ type MetadataServiceClient interface {
 	SendHeartbeat(ctx context.Context, in *SendHeartbeatRequest, opts ...grpc.CallOption) (*SendHeartbeatResponse, error)
 	// GetNodes returns all registered nodes inside a cluster, or all nodes if cluster_id is empty.
 	GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
+	// CreateDatabaseRecord creates a new database entry in 'provisioning' status.
+	CreateDatabaseRecord(ctx context.Context, in *CreateDatabaseRecordRequest, opts ...grpc.CallOption) (*CreateDatabaseRecordResponse, error)
+	// UpdateDatabaseStatus updates database registration fields (status, node_id, endpoint, attempts).
+	UpdateDatabaseStatus(ctx context.Context, in *UpdateDatabaseStatusRequest, opts ...grpc.CallOption) (*UpdateDatabaseStatusResponse, error)
+	// GetDatabase fetches info for a specific database.
+	GetDatabase(ctx context.Context, in *GetDatabaseRequest, opts ...grpc.CallOption) (*GetDatabaseResponse, error)
+	// ListDatabases lists all databases optionally filtered by cluster_id.
+	ListDatabases(ctx context.Context, in *ListDatabasesRequest, opts ...grpc.CallOption) (*ListDatabasesResponse, error)
+	// DeleteDatabaseRecord deletes the database metadata.
+	DeleteDatabaseRecord(ctx context.Context, in *DeleteDatabaseRecordRequest, opts ...grpc.CallOption) (*DeleteDatabaseRecordResponse, error)
 }
 
 type metadataServiceClient struct {
@@ -74,6 +89,56 @@ func (c *metadataServiceClient) GetNodes(ctx context.Context, in *GetNodesReques
 	return out, nil
 }
 
+func (c *metadataServiceClient) CreateDatabaseRecord(ctx context.Context, in *CreateDatabaseRecordRequest, opts ...grpc.CallOption) (*CreateDatabaseRecordResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateDatabaseRecordResponse)
+	err := c.cc.Invoke(ctx, MetadataService_CreateDatabaseRecord_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metadataServiceClient) UpdateDatabaseStatus(ctx context.Context, in *UpdateDatabaseStatusRequest, opts ...grpc.CallOption) (*UpdateDatabaseStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateDatabaseStatusResponse)
+	err := c.cc.Invoke(ctx, MetadataService_UpdateDatabaseStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metadataServiceClient) GetDatabase(ctx context.Context, in *GetDatabaseRequest, opts ...grpc.CallOption) (*GetDatabaseResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDatabaseResponse)
+	err := c.cc.Invoke(ctx, MetadataService_GetDatabase_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metadataServiceClient) ListDatabases(ctx context.Context, in *ListDatabasesRequest, opts ...grpc.CallOption) (*ListDatabasesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListDatabasesResponse)
+	err := c.cc.Invoke(ctx, MetadataService_ListDatabases_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metadataServiceClient) DeleteDatabaseRecord(ctx context.Context, in *DeleteDatabaseRecordRequest, opts ...grpc.CallOption) (*DeleteDatabaseRecordResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteDatabaseRecordResponse)
+	err := c.cc.Invoke(ctx, MetadataService_DeleteDatabaseRecord_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MetadataServiceServer is the server API for MetadataService service.
 // All implementations must embed UnimplementedMetadataServiceServer
 // for forward compatibility.
@@ -84,6 +149,16 @@ type MetadataServiceServer interface {
 	SendHeartbeat(context.Context, *SendHeartbeatRequest) (*SendHeartbeatResponse, error)
 	// GetNodes returns all registered nodes inside a cluster, or all nodes if cluster_id is empty.
 	GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
+	// CreateDatabaseRecord creates a new database entry in 'provisioning' status.
+	CreateDatabaseRecord(context.Context, *CreateDatabaseRecordRequest) (*CreateDatabaseRecordResponse, error)
+	// UpdateDatabaseStatus updates database registration fields (status, node_id, endpoint, attempts).
+	UpdateDatabaseStatus(context.Context, *UpdateDatabaseStatusRequest) (*UpdateDatabaseStatusResponse, error)
+	// GetDatabase fetches info for a specific database.
+	GetDatabase(context.Context, *GetDatabaseRequest) (*GetDatabaseResponse, error)
+	// ListDatabases lists all databases optionally filtered by cluster_id.
+	ListDatabases(context.Context, *ListDatabasesRequest) (*ListDatabasesResponse, error)
+	// DeleteDatabaseRecord deletes the database metadata.
+	DeleteDatabaseRecord(context.Context, *DeleteDatabaseRecordRequest) (*DeleteDatabaseRecordResponse, error)
 	mustEmbedUnimplementedMetadataServiceServer()
 }
 
@@ -102,6 +177,21 @@ func (UnimplementedMetadataServiceServer) SendHeartbeat(context.Context, *SendHe
 }
 func (UnimplementedMetadataServiceServer) GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetNodes not implemented")
+}
+func (UnimplementedMetadataServiceServer) CreateDatabaseRecord(context.Context, *CreateDatabaseRecordRequest) (*CreateDatabaseRecordResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateDatabaseRecord not implemented")
+}
+func (UnimplementedMetadataServiceServer) UpdateDatabaseStatus(context.Context, *UpdateDatabaseStatusRequest) (*UpdateDatabaseStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateDatabaseStatus not implemented")
+}
+func (UnimplementedMetadataServiceServer) GetDatabase(context.Context, *GetDatabaseRequest) (*GetDatabaseResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDatabase not implemented")
+}
+func (UnimplementedMetadataServiceServer) ListDatabases(context.Context, *ListDatabasesRequest) (*ListDatabasesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListDatabases not implemented")
+}
+func (UnimplementedMetadataServiceServer) DeleteDatabaseRecord(context.Context, *DeleteDatabaseRecordRequest) (*DeleteDatabaseRecordResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteDatabaseRecord not implemented")
 }
 func (UnimplementedMetadataServiceServer) mustEmbedUnimplementedMetadataServiceServer() {}
 func (UnimplementedMetadataServiceServer) testEmbeddedByValue()                         {}
@@ -178,6 +268,96 @@ func _MetadataService_GetNodes_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MetadataService_CreateDatabaseRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDatabaseRecordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetadataServiceServer).CreateDatabaseRecord(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetadataService_CreateDatabaseRecord_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetadataServiceServer).CreateDatabaseRecord(ctx, req.(*CreateDatabaseRecordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetadataService_UpdateDatabaseStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateDatabaseStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetadataServiceServer).UpdateDatabaseStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetadataService_UpdateDatabaseStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetadataServiceServer).UpdateDatabaseStatus(ctx, req.(*UpdateDatabaseStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetadataService_GetDatabase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDatabaseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetadataServiceServer).GetDatabase(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetadataService_GetDatabase_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetadataServiceServer).GetDatabase(ctx, req.(*GetDatabaseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetadataService_ListDatabases_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDatabasesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetadataServiceServer).ListDatabases(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetadataService_ListDatabases_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetadataServiceServer).ListDatabases(ctx, req.(*ListDatabasesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetadataService_DeleteDatabaseRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDatabaseRecordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetadataServiceServer).DeleteDatabaseRecord(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetadataService_DeleteDatabaseRecord_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetadataServiceServer).DeleteDatabaseRecord(ctx, req.(*DeleteDatabaseRecordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MetadataService_ServiceDesc is the grpc.ServiceDesc for MetadataService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -196,6 +376,26 @@ var MetadataService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNodes",
 			Handler:    _MetadataService_GetNodes_Handler,
+		},
+		{
+			MethodName: "CreateDatabaseRecord",
+			Handler:    _MetadataService_CreateDatabaseRecord_Handler,
+		},
+		{
+			MethodName: "UpdateDatabaseStatus",
+			Handler:    _MetadataService_UpdateDatabaseStatus_Handler,
+		},
+		{
+			MethodName: "GetDatabase",
+			Handler:    _MetadataService_GetDatabase_Handler,
+		},
+		{
+			MethodName: "ListDatabases",
+			Handler:    _MetadataService_ListDatabases_Handler,
+		},
+		{
+			MethodName: "DeleteDatabaseRecord",
+			Handler:    _MetadataService_DeleteDatabaseRecord_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
