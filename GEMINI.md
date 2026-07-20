@@ -290,9 +290,9 @@ its own tests, its own Dockerfile.
 
 ## 8. Current Status
 
-**Phase in progress:** Phase 2 — Control Plane.
+**Phase in progress:** Phase 3 — Storage Engine.
 **Language decision:** Rust for storage engine (Phase 3) (logged in [rust-vs-cpp.md](file:///d:/nimbus-db/docs/decisions/rust-vs-cpp.md)).
-**Next step:** Phase 2 — Database Creation Flow (validate -> choose cluster -> choose node -> provision -> update metadata -> return).
+**Next step:** Phase 3 — Storage Engine (4KB page storage, Write-Ahead Log, crash recovery, Hash Index, leader/follower replication).
 
 *(Update this section as phases complete — this is the running state file
 for the whole project.)*

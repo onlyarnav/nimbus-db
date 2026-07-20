@@ -37,7 +37,7 @@ Everything from here forward is build execution, tracked in Section 2.
 | Phase | Status         | Started | Completed | Notes |
 |-------|-----------------|---------|-----------|-------|
 | 1 — Cluster Foundation | ✅ Complete | 2026-07-12 | 2026-07-14 | All steps 1-8 completed: Metadata Service, gRPC node registration, heartbeat loop, Health Manager background daemon, Least Loaded Scheduler, E2E integration tests, Next.js dashboard, and measured benchmarks. |
-| 2 — Control Plane        | ⬜ Not started | — | — | Blocked on Phase 1 completion. |
+| 2 — Control Plane        | ✅ Complete | 2026-07-20 | 2026-07-20 | All steps 1-8 of suggested build order complete: metadata service database/replica handlers, NodeAgent gRPC directory namespaces, failure injection triggers, Control Plane REST handlers, state machine retry/failover orchestrator, background reconciler loop, unit test suite, and E2E integration test scripts. |
 | 3 — Storage Engine          | ⬜ Not started | — | — | Blocked on Phase 2. Language decision (Rust vs C++) pending. |
 | 4 — Multi-Region                | ⬜ Not started | — | — | Blocked on Phase 3. Consistency model decision pending. |
 | 5 — Observability                  | ⬜ Not started | — | — | Blocked on Phase 4. |
@@ -68,7 +68,7 @@ finished and verified — never on partial progress.
 | Consistency model: eventual vs strong | Phase 4, Section 3 | ⬜ Pending | — |
 | ANN index: HNSW vs IVF | Phase 6, Section 4.2 | ⬜ Pending (recommendation: HNSW, ties to Qdrant history) | — |
 | Auth approach: JWT bearer vs full OAuth2 | Phase 8, Section 4.1 | ⬜ Pending (recommendation: JWT bearer) | — |
-| K8s workload types (StatefulSet vs Deployment per service) | Phase 9, Section 4.2 | ⬜ Pending | — |
+| K8s workload types (StatefulSet vs Deployment per service) | Phase 9, Section 6.2 | ⬜ Pending | — |
 | HPA vs Phase 7's app-level autoscaler | Phase 9, Section 6.1 | ⬜ Pending (recommendation: both, different layers) | — |
 | Release strategy: merge-to-main vs tag-based | Phase 10, Section 4.1 | ⬜ Pending | — |
 
@@ -102,12 +102,11 @@ targets' actual JD language before being added to a phase file.
 
 ## 6. Immediate Next Action
 
-**Phase 2 — Control Plane**:
-- Implement `/createDatabase` full provisioning orchestrator.
-- Develop the Control Plane API Service (REST edge for edge creations).
-- Define Node Agent provisioning RPC stubs (`CreateDatabase`, `DeleteDatabase`, `BackupDatabase`, `RestoreDatabase`).
-- Build retry-on-failure logic (rescheduling onto different healthy nodes if choice fails mid-provision).
-- Create E2E resiliency integration test.
+**Phase 3 — Storage Engine**:
+- Design and build 4KB page size structures and memory mapping helpers.
+- Design Write-Ahead Log (WAL) records serialization, recovery replay logic.
+- Design Hash Index and B+Tree paging layout in Rust.
+- Set up leader/follower ACK-based commit replication tests.
 
 ---
 
@@ -132,3 +131,4 @@ targets' actual JD language before being added to a phase file.
 - 2026-07-14 — All spec files confirmed written (Section 1). Next: finish
   Phase 1 build (Steps 3-8) in a single session.
 - 2026-07-14 — Phase 1 complete. Developed heartbeat loop, Health Manager evaluation ticker, Least Loaded scheduler, Next.js live dashboard, E2E docker-compose integration test suite, and documented actual measured benchmarks.
+- 2026-07-20 — Phase 2 complete. Implemented database metadata handlers, NodeAgent directory namespace provisioning with failure injection hooks, Control Plane REST APIs, reschedule orchestrator, background reconciler, and unit/integration tests.
