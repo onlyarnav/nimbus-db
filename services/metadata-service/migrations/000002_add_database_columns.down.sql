@@ -1,0 +1,5 @@
+ALTER TABLE databases DROP COLUMN IF EXISTS cluster_id;
+ALTER TABLE databases DROP COLUMN IF EXISTS status;
+ALTER TABLE databases DROP COLUMN IF EXISTS attempts;
+ALTER TABLE databases DROP COLUMN IF EXISTS endpoint;
+ALTER TABLE databases DROP COLUMN IF EXISTS updated_at;

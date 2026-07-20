@@ -1,0 +1,5 @@
+ALTER TABLE databases ADD COLUMN cluster_id UUID REFERENCES clusters(id);
+ALTER TABLE databases ADD COLUMN status TEXT NOT NULL DEFAULT 'provisioning';
+ALTER TABLE databases ADD COLUMN attempts INT NOT NULL DEFAULT 1;
+ALTER TABLE databases ADD COLUMN endpoint TEXT;
+ALTER TABLE databases ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
