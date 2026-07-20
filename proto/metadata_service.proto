@@ -4,7 +4,6 @@ package metadata;
 
 option go_package = "github.com/onlyarnav/nimbusdb/services/metadata-service/proto;metadata";
 
-service MetadataService {
   // RegisterNode registers a new worker node in a specific cluster.
   rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse);
 
@@ -13,6 +12,21 @@ service MetadataService {
 
   // GetNodes returns all registered nodes inside a cluster, or all nodes if cluster_id is empty.
   rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
+
+  // CreateDatabaseRecord creates a new database entry in 'provisioning' status.
+  rpc CreateDatabaseRecord(CreateDatabaseRecordRequest) returns (CreateDatabaseRecordResponse);
+
+  // UpdateDatabaseStatus updates database registration fields (status, node_id, endpoint, attempts).
+  rpc UpdateDatabaseStatus(UpdateDatabaseStatusRequest) returns (UpdateDatabaseStatusResponse);
+
+  // GetDatabase fetches info for a specific database.
+  rpc GetDatabase(GetDatabaseRequest) returns (GetDatabaseResponse);
+
+  // ListDatabases lists all databases optionally filtered by cluster_id.
+  rpc ListDatabases(ListDatabasesRequest) returns (ListDatabasesResponse);
+
+  // DeleteDatabaseRecord deletes the database metadata.
+  rpc DeleteDatabaseRecord(DeleteDatabaseRecordRequest) returns (DeleteDatabaseRecordResponse);
 }
 
 message RegisterNodeRequest {
@@ -71,4 +85,64 @@ message ScheduleResponse {
   string node_id = 1;
   float score = 2;
   map<string, float> score_breakdown = 3;
+}
+
+message CreateDatabaseRecordRequest {
+  string name = 1;
+  string cluster_id = 2;
+  string node_id = 3;
+  string status = 4;
+  int32 attempts = 5;
+}
+
+message CreateDatabaseRecordResponse {
+  string database_id = 1;
+}
+
+message UpdateDatabaseStatusRequest {
+  string database_id = 1;
+  string status = 2;
+  string node_id = 3;
+  string endpoint = 4;
+  int32 attempts = 5;
+}
+
+message UpdateDatabaseStatusResponse {
+  bool success = 1;
+}
+
+message GetDatabaseRequest {
+  string database_id = 1;
+}
+
+message DatabaseInfo {
+  string id = 1;
+  string name = 2;
+  string cluster_id = 3;
+  string node_id = 4;
+  string status = 5;
+  string endpoint = 6;
+  int32 attempts = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message GetDatabaseResponse {
+  DatabaseInfo database = 1;
+}
+
+message ListDatabasesRequest {
+  string cluster_id = 1;
+}
+
+message ListDatabasesResponse {
+  repeated DatabaseInfo databases = 1;
+}
+
+message DeleteDatabaseRecordRequest {
+  string database_id = 1;
+}
+
+message DeleteDatabaseRecordResponse {
+  bool success = 1;
 }
