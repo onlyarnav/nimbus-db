@@ -12,11 +12,15 @@ import (
 	"syscall"
 	"time"
 
+	"net"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/onlyarnav/nimbusdb/services/worker-node/agent"
 	"github.com/onlyarnav/nimbusdb/services/worker-node/config"
 	pb "github.com/onlyarnav/nimbusdb/services/worker-node/proto"
+	pbAgent "github.com/onlyarnav/nimbusdb/services/worker-node/proto/nodeagent"
 )
 
 func main() {
@@ -64,6 +68,9 @@ func main() {
 	}
 	slog.Info("node registered successfully", "node_id", nodeID, "heartbeat_interval_seconds", interval)
 
+	// Setup NodeAgent Server
+	agentServer := agent.NewServer("data", cfg.Hostname)
+
 	// Setup debug HTTP server for failure simulation
 	var paused atomic.Bool
 
@@ -88,6 +95,27 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("resumed"))
 	})
+	mux.HandleFunc("/debug/inject-failure", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		attemptsStr := r.URL.Query().Get("attempts")
+		hangStr := r.URL.Query().Get("hang")
+		var attemptsVal int
+		var hangVal int
+		if attemptsStr != "" {
+			fmt.Sscanf(attemptsStr, "%d", &attemptsVal)
+			atomic.StoreInt32(&agentServer.FailAttempts, int32(attemptsVal))
+		}
+		if hangStr != "" {
+			fmt.Sscanf(hangStr, "%d", &hangVal)
+			atomic.StoreInt32(&agentServer.HangAttempts, int32(hangVal))
+		}
+		slog.Warn("injected simulated database provisioning parameters", "fail_attempts", attemptsVal, "hang_attempts", hangVal)
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("injected"))
+	})
 
 	debugServer := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.DebugPort),
@@ -98,6 +126,22 @@ func main() {
 		slog.Info("worker debug server listening", "port", cfg.DebugPort)
 		if err := debugServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("worker debug server failed", "error", err)
+		}
+	}()
+
+	// Start NodeAgent gRPC server
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.NodeAgentPort))
+	if err != nil {
+		slog.Error("failed to listen for NodeAgent gRPC", "error", err)
+		os.Exit(1)
+	}
+	grpcAgentServer := grpc.NewServer()
+	pbAgent.RegisterNodeAgentServer(grpcAgentServer, agentServer)
+
+	go func() {
+		slog.Info("NodeAgent gRPC server listening", "port", cfg.NodeAgentPort)
+		if err := grpcAgentServer.Serve(lis); err != nil {
+			slog.Error("NodeAgent gRPC server failed", "error", err)
 		}
 	}()
 
@@ -171,6 +215,9 @@ func main() {
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer shutdownCancel()
 	_ = debugServer.Shutdown(shutdownCtx)
+
+	slog.Info("shutting down NodeAgent gRPC server")
+	grpcAgentServer.GracefulStop()
 
 	slog.Info("shutting down worker node gracefully")
 }
