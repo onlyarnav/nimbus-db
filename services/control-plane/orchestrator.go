@@ -94,7 +94,7 @@ func (o *Orchestrator) ProvisionDatabase(ctx context.Context, dbID string, name 
 		}
 
 		// 4. Dial Node Agent and invoke CreateDatabase
-		agentAddr := fmt.Sprintf("%s:50053")
+		var agentAddr string
 		// Resolves by hostname in bridge network or localhost in local test
 		if targetNodeHostname == "worker-local" || targetNodeHostname == "test-worker-node" || targetNodeHostname == "localhost" {
 			agentAddr = "localhost:50053"

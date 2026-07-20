@@ -4,6 +4,7 @@ package metadata;
 
 option go_package = "github.com/onlyarnav/nimbusdb/services/metadata-service/proto;metadata";
 
+service MetadataService {
   // RegisterNode registers a new worker node in a specific cluster.
   rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse);
 

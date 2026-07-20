@@ -14,6 +14,11 @@ import (
 )
 
 func TestClusterIntegration(t *testing.T) {
+	// Check if docker daemon is running
+	if err := exec.Command("docker", "info").Run(); err != nil {
+		t.Skip("Skipping integration test: docker daemon is not running")
+	}
+
 	// 1. Spin up the docker-compose stack
 	t.Log("Starting docker-compose services...")
 	cmdUp := exec.Command("docker", "compose", "-f", "../../deploy/docker/docker-compose.yml", "up", "-d", "--build")
