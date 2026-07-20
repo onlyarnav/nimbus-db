@@ -57,6 +57,7 @@ services:
       CLUSTER_ID: 00000000-0000-0000-0000-000000000000
       HOSTNAME: worker-1
       DEBUG_PORT: 8081
+      NODE_AGENT_PORT: 50053
     ports:
       - "8081:8081"
     depends_on:
@@ -72,6 +73,7 @@ services:
       CLUSTER_ID: 00000000-0000-0000-0000-000000000000
       HOSTNAME: worker-2
       DEBUG_PORT: 8082
+      NODE_AGENT_PORT: 50053
     ports:
       - "8082:8082"
     depends_on:
@@ -87,10 +89,26 @@ services:
       CLUSTER_ID: 00000000-0000-0000-0000-000000000000
       HOSTNAME: worker-3
       DEBUG_PORT: 8083
+      NODE_AGENT_PORT: 50053
     ports:
       - "8083:8083"
     depends_on:
       - metadata-service
+
+  control-plane:
+    build:
+      context: ../../services/control-plane
+      dockerfile: Dockerfile
+    container_name: nimbusdb_control_plane
+    environment:
+      METADATA_GRPC_ADDR: metadata-service:50051
+      SCHEDULER_GRPC_ADDR: scheduler:50052
+      HTTP_PORT: 8082
+    ports:
+      - "8085:8082"
+    depends_on:
+      - metadata-service
+      - scheduler
 
 volumes:
   pgdata:
