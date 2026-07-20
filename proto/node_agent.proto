@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package nodeagent;
+
+option go_package = "github.com/onlyarnav/nimbusdb/services/worker-node/proto;nodeagent";
+
+service NodeAgent {
+  // CreateDatabase allocates directory space and registers a database.
+  rpc CreateDatabase(CreateDatabaseRequest) returns (CreateDatabaseResponse);
+
+  // DeleteDatabase deletes database allocations.
+  rpc DeleteDatabase(DeleteDatabaseRequest) returns (DeleteDatabaseResponse);
+
+  // BackupDatabase is stubbed in this phase.
+  rpc BackupDatabase(BackupDatabaseRequest) returns (BackupDatabaseResponse);
+
+  // RestoreDatabase is stubbed in this phase.
+  rpc RestoreDatabase(RestoreDatabaseRequest) returns (RestoreDatabaseResponse);
+}
+
+message CreateDatabaseRequest {
+  string name = 1;
+  string database_id = 2;
+}
+
+message CreateDatabaseResponse {
+  bool success = 1;
+  string endpoint = 2;
+  string error = 3;
+}
+
+message DeleteDatabaseRequest {
+  string database_id = 1;
+}
+
+message DeleteDatabaseResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message BackupDatabaseRequest {
+  string database_id = 1;
+}
+
+message BackupDatabaseResponse {
+  bool success = 1;
+  string backup_path = 2;
+  string error = 3;
+}
+
+message RestoreDatabaseRequest {
+  string database_id = 1;
+  string backup_path = 2;
+}
+
+message RestoreDatabaseResponse {
+  bool success = 1;
+  string error = 2;
+}
