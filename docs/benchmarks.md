@@ -24,3 +24,14 @@ These numbers represent the time taken by the background `HealthManager` classif
 | `healthy` → `unhealthy` | 15 seconds | **16 seconds** | Observed at 16s (15s threshold + 1s check delay) in Integration Test Run 1 & 3, and 18s in Run 2. |
 | `unhealthy` → `dead` | 60 seconds | **60 - 62 seconds** | Observed at exactly 1m0s (60s threshold) in Run 1 & 3, and 1m2s in Run 2. |
 | `dead` → `healthy` (Recovery) | Instant | **1 - 2 seconds** | Observed within 2 seconds after resuming heartbeat emissions. |
+
+## Phase 2 — Control Plane Benchmarks
+
+The following latencies represent the database provisioning performance under healthy and simulated failure scenarios.
+
+### 1. Database Provisioning Latency
+
+| Scenario | Measured Latency | Attempts | Description |
+|----------|------------------|----------|-------------|
+| **Happy Path Provisioning** | `[BENCHMARK: happy path database provision latency pending docker deployment]` | 1 | REST creation call to active endpoint return. |
+| **Retry Path Provisioning** | `[BENCHMARK: retry path database provision latency pending docker deployment]` | 2 | End-to-end latency when first-scheduled node fails and provisions on fallback. |
