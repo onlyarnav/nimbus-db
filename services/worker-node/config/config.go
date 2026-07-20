@@ -10,6 +10,7 @@ type Config struct {
 	ClusterID        string
 	Hostname         string
 	DebugPort        string
+	NodeAgentPort    string
 }
 
 // Load loads the configuration from environment variables.
@@ -30,10 +31,15 @@ func Load() *Config {
 	if debugPort == "" {
 		debugPort = "8081"
 	}
+	agentPort := os.Getenv("NODE_AGENT_PORT")
+	if agentPort == "" {
+		agentPort = "50053"
+	}
 	return &Config{
 		MetadataGRPCAddr: addr,
 		ClusterID:        clusterID,
 		Hostname:         hostname,
 		DebugPort:        debugPort,
+		NodeAgentPort:    agentPort,
 	}
 }
