@@ -34,3 +34,8 @@ vendor/
 Thumbs.db
 db.json
 .DS_Store
+
+# Rust build artifacts
+target/
+**/target/
+
