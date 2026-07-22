@@ -38,7 +38,7 @@ Everything from here forward is build execution, tracked in Section 2.
 |-------|-----------------|---------|-----------|-------|
 | 1 — Cluster Foundation | ✅ Complete | 2026-07-12 | 2026-07-14 | All steps 1-8 completed: Metadata Service, gRPC node registration, heartbeat loop, Health Manager background daemon, Least Loaded Scheduler, E2E integration tests, Next.js dashboard, and measured benchmarks. |
 | 2 — Control Plane        | ✅ Complete | 2026-07-20 | 2026-07-20 | All steps 1-8 of suggested build order complete: metadata service database/replica handlers, NodeAgent gRPC directory namespaces, failure injection triggers, Control Plane REST handlers, state machine retry/failover orchestrator, background reconciler loop, unit test suite, and E2E integration test scripts. |
-| 3 — Storage Engine          | ⬜ Not started | — | — | Blocked on Phase 2. Language decision (Rust vs C++) pending. |
+| 3 — Storage Engine          | 🟡 In progress | 2026-07-22 | — | In progress: Rust storage engine implementation. |
 | 4 — Multi-Region                | ⬜ Not started | — | — | Blocked on Phase 3. Consistency model decision pending. |
 | 5 — Observability                  | ⬜ Not started | — | — | Blocked on Phase 4. |
 | 6 — AI-Ready Database                  | ⬜ Not started | — | — | Blocked on Phase 5. HNSW vs IVF decision pending. |
