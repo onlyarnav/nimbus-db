@@ -38,7 +38,7 @@ Everything from here forward is build execution, tracked in Section 2.
 |-------|-----------------|---------|-----------|-------|
 | 1 — Cluster Foundation | ✅ Complete | 2026-07-12 | 2026-07-14 | All steps 1-8 completed: Metadata Service, gRPC node registration, heartbeat loop, Health Manager background daemon, Least Loaded Scheduler, E2E integration tests, Next.js dashboard, and measured benchmarks. |
 | 2 — Control Plane        | ✅ Complete | 2026-07-20 | 2026-07-20 | All steps 1-8 of suggested build order complete: metadata service database/replica handlers, NodeAgent gRPC directory namespaces, failure injection triggers, Control Plane REST handlers, state machine retry/failover orchestrator, background reconciler loop, unit test suite, and E2E integration test scripts. |
-| 3 — Storage Engine          | 🟡 In progress | 2026-07-22 | — | In progress: Rust storage engine implementation. |
+| 3 — Storage Engine          | ✅ Complete | 2026-07-22 | 2026-07-22 | All steps 1-10 complete: 4KB Page Manager, WAL with torn-write recovery, LSN idempotency Crash Recovery with 10-run kill test, Hash Index (v1), real Snapshot Backup/Restore, Compaction engine, B+Tree Index (v2), streaming Replication with ACK quorum & degraded mode. |
 | 4 — Multi-Region                | ⬜ Not started | — | — | Blocked on Phase 3. Consistency model decision pending. |
 | 5 — Observability                  | ⬜ Not started | — | — | Blocked on Phase 4. |
 | 6 — AI-Ready Database                  | ⬜ Not started | — | — | Blocked on Phase 5. HNSW vs IVF decision pending. |
@@ -63,8 +63,8 @@ finished and verified — never on partial progress.
 | Postgres vs SQLite for metadata store (dev) | Phase 1, Step 1 | ✅ Resolved | `docs/decisions/metadata-store-choice.md` |
 | gRPC vs REST for internal service calls | Phase 1, Step 1 | ✅ Resolved | `docs/decisions/internal-rpc-choice.md` |
 | Rust vs C++ for storage engine | Phase 3, before any code | ✅ Resolved | `docs/decisions/rust-vs-cpp.md` |
-| WAL fsync policy (every write vs batched) | Phase 3, Section 5.1 | ⬜ Pending | — |
-| Replication ACK quorum policy | Phase 3, Section 10.1 | ⬜ Pending (default: ACK from all followers, refine in Phase 4) | — |
+| WAL fsync policy (every write vs batched) | Phase 3, Section 5.1 | ✅ Resolved | `docs/decisions/wal-fsync-policy.md` |
+| Replication ACK quorum policy | Phase 3, Section 10.1 | ✅ Resolved | `docs/decisions/ack-quorum-policy.md` |
 | Consistency model: eventual vs strong | Phase 4, Section 3 | ⬜ Pending | — |
 | ANN index: HNSW vs IVF | Phase 6, Section 4.2 | ⬜ Pending (recommendation: HNSW, ties to Qdrant history) | — |
 | Auth approach: JWT bearer vs full OAuth2 | Phase 8, Section 4.1 | ⬜ Pending (recommendation: JWT bearer) | — |
@@ -81,7 +81,7 @@ table row updates to ✅ with a link/reference.
 
 | Item | Originally scoped in | Actually resolved in | Status |
 |------|------------------------|------------------------|--------|
-| Real backup/restore (Node Agent) | Phase 2 (stub only) | Phase 3, Section 8 | ⬜ Pending — closes once Phase 3 Section 8.2 test passes |
+| Real backup/restore (Node Agent) | Phase 2 (stub only) | Phase 3, Section 8 | ✅ Resolved — verified with snapshot backup/restore E2E integration test |
 | Rubrik-style extensions (WORM/immutable snapshots, anomaly detection, legal-hold retention) | Suggested externally, 2026-07-13 | Not scheduled — off-roadmap | Parked. Explicitly excluded from Phase 6 (Section 9) and Phase 8 (Section 11) as scope-creep guards. Not aligned with current target list. Revisit only if a data-protection/backup-focused company becomes an actual target. |
 
 ---
@@ -102,11 +102,10 @@ targets' actual JD language before being added to a phase file.
 
 ## 6. Immediate Next Action
 
-**Phase 3 — Storage Engine**:
-- Design and build 4KB page size structures and memory mapping helpers.
-- Design Write-Ahead Log (WAL) records serialization, recovery replay logic.
-- Design Hash Index and B+Tree paging layout in Rust.
-- Set up leader/follower ACK-based commit replication tests.
+**Phase 4 — Multi-Region**:
+- Design simulated multi-region clusters (India, US East, US West, Europe, Japan).
+- Implement nearest-region router and region-aware scheduling.
+- Implement region failover & leader election.
 
 ---
 
@@ -132,3 +131,4 @@ targets' actual JD language before being added to a phase file.
   Phase 1 build (Steps 3-8) in a single session.
 - 2026-07-14 — Phase 1 complete. Developed heartbeat loop, Health Manager evaluation ticker, Least Loaded scheduler, Next.js live dashboard, E2E docker-compose integration test suite, and documented actual measured benchmarks.
 - 2026-07-20 — Phase 2 complete. Implemented database metadata handlers, NodeAgent directory namespace provisioning with failure injection hooks, Control Plane REST APIs, reschedule orchestrator, background reconciler, and unit/integration tests.
+- 2026-07-22 — Phase 3 complete. Developed 4KB Page Manager, append-only WAL with torn-write truncation, Crash Recovery with 10-run randomized kill test, Hash Index, B+Tree Index with range scans, Snapshots & Backup/Restore, Compaction space reclamation, streaming Replication with ACK quorum, and documented measured performance metrics.
