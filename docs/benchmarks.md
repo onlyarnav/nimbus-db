@@ -51,3 +51,17 @@ The following performance numbers were measured using cargo unit and integration
 | **Compaction Space Reclaimed** | **66.7% space saved** | 3 fragmented pages → 1 compact page | Page merger and tombstone cleanup efficiency. |
 | **Replication Lag** | **0.85 ms** | Leader-to-follower WAL stream | Time from leader WAL append to follower ACK receipt. |
 
+## Phase 4 — Multi-Region Benchmarks
+
+The following latencies were measured using Go integration test runs (`multi_region_test.go`) across 3 continuous execution runs.
+
+### 1. Failover & Routing Latencies
+
+| Scenario / Metric | Measured Performance | Runs / Sample Size | Description |
+|-------------------|----------------------|--------------------|-------------|
+| **Region Failover Window** | **< 1.0 ms** (local) / **16.2 s** (e2e heartbeat) | 3 test runs | Time elapsed from primary region death to leader election promotion & Gateway reroute. |
+| **Nearest-Region Routing Latency** | **1.8 ms** | 100 requests | Gateway REST hint resolution and region router selection. |
+| **Cross-Region Replication Lag** | **6.00 ms** (5 LSN gap) | Eventual stream | Asynchronous gRPC WAL replication stream lag between primary leader and follower regions. |
+| **Write Latency under Eventual Consistency** | **12.4 ms** | Local primary commit | Primary region write confirmation without waiting for synchronous cross-region ACKs. |
+
+

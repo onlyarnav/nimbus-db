@@ -4,11 +4,13 @@ The Control Plane manages metadata placement, API orchestration, and database sc
 
 ## Responsibilities
 
-- **REST API Endpoint Hosting**: Client-facing CRUD edge operations on databases.
-- **Placement Scheduling**: Queries the Scheduler service (via gRPC) to find the least loaded worker node.
+- **Internal gRPC API Service**: Serves internal provisioning and region failover orchestration requests from the Gateway (`services/gateway`).
+- **Placement Scheduling**: Queries the Scheduler service (via gRPC) to find the least loaded worker node within target/fallback regions.
 - **Provisioning Coordination**: Directs Node Agents (via gRPC) to allocate directory namespaces on selected workers.
+- **Multi-Region Leader Election & Failover**: Orchestrates deterministic leader election when a primary region goes down, promoting the highest-LSN follower region to primary.
 - **Resilient Retry Orchestrator**: Handles mid-provision failures with automatic node failover and rescheduling (reschedules up to 3 times).
-- **Background Reconciler Loop**: Periodically sweeps the Registry (every 5 seconds) to identify databases stuck in the `'provisioning'` state for longer than 30 seconds, automatically resuming or failing the provisioning sequence.
+- **Background Reconciler Loop**: Periodically sweeps the Registry to identify database health state changes and execute automatic region failovers.
+
 
 > [!NOTE]
 > **Explicit Stubbing**: In Phase 2, `BackupDatabase` and `RestoreDatabase` gRPC endpoints are intentionally left as unimplemented stubs returning `codes.Unimplemented`. Full integration will take place in Phase 3 once the underlying WAL and snapshot storage mechanisms are developed.

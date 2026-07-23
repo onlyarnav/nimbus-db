@@ -5,8 +5,10 @@ The Scheduler is a standalone control-plane microservice that determines node pl
 ## Responsibilities
 
 - Exposes the `Schedule` gRPC API (listening on port `50052`).
-- Communicates with the Metadata Service to query the current node topologies and resources.
-- Evaluates candidate nodes using the **Least Loaded Algorithm**.
+- Communicates with the Metadata Service to query current node topologies, regional health, and resource statistics.
+- Evaluates candidate nodes using the **Least Loaded Algorithm** within a target region.
+- Applies a **Region-Aware Fallback Layer**: if the preferred region is down or has no healthy nodes, falls back in latency order per the synthetic inter-region latency matrix (`india`, `us-east`, `us-west`, `europe`, `japan`).
+
 
 ## Tech Stack
 
