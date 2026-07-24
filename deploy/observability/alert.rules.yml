@@ -1,0 +1,47 @@
+groups:
+  - name: nimbusdb_alerts
+    rules:
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, sum(rate(request_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 request latency exceeds 500ms threshold"
+          description: "High request latency detected on NimbusDB gateway or service REST/gRPC endpoints."
+
+      - alert: NodeDown
+        expr: cpu_usage_percent == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "NimbusDB worker node heartbeat lost"
+          description: "Worker node is not reporting CPU/memory metrics and has been classified dead."
+
+      - alert: RegionDown
+        expr: region_health == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Simulated database region is DOWN"
+          description: "All worker nodes in region are dead. Region failover triggered."
+
+      - alert: HighReplicationLag
+        expr: replication_lag_seconds > 5
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "High WAL cross-region replication lag"
+          description: "Replication streaming lag to follower region exceeds 5 seconds."
+
+      - alert: HighErrorRate
+        expr: sum(rate(errors_total[2m])) > 0.05
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "API or internal service error rate exceeds threshold."

@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+rule_files:
+  - alert.rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: 'nimbusdb-gateway'
+    static_configs:
+      - targets: ['gateway:8082']
+
+  - job_name: 'nimbusdb-metadata'
+    static_configs:
+      - targets: ['metadata-service:8080']
+
+  - job_name: 'nimbusdb-scheduler'
+    static_configs:
+      - targets: ['scheduler:9091']
+
+  - job_name: 'nimbusdb-control-plane'
+    static_configs:
+      - targets: ['control-plane:8082']
+
+  - job_name: 'nimbusdb-worker-node'
+    static_configs:
+      - targets: ['worker-node:9090']
