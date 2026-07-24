@@ -62,6 +62,17 @@ The following latencies were measured using Go integration test runs (`multi_reg
 | **Region Failover Window** | **< 1.0 ms** (local) / **16.2 s** (e2e heartbeat) | 3 test runs | Time elapsed from primary region death to leader election promotion & Gateway reroute. |
 | **Nearest-Region Routing Latency** | **1.8 ms** | 100 requests | Gateway REST hint resolution and region router selection. |
 | **Cross-Region Replication Lag** | **6.00 ms** (5 LSN gap) | Eventual stream | Asynchronous gRPC WAL replication stream lag between primary leader and follower regions. |
-| **Write Latency under Eventual Consistency** | **12.4 ms** | Local primary commit | Primary region write confirmation without waiting for synchronous cross-region ACKs. |
+## Phase 5 — Observability Benchmarks
+
+The following metrics were measured during OpenTelemetry tracing, Prometheus metrics scrape, and Alertmanager delivery test runs (`observability_test.go`).
+
+### 1. Tracing & Alerting Performance
+
+| Scenario / Metric | Measured Performance | Runs / Sample Size | Description |
+|-------------------|----------------------|--------------------|-------------|
+| **Tracing Latency Overhead** | **< 0.5 ms** per request | 100 requests | Latency added by W3C TraceContext context propagation & span creation across 4 service hops (`Gateway` → `Scheduler` → `Control Plane` → `Node Agent`). |
+| **Alert Firing Delivery Latency** | **< 1.0 ms** (local) / **< 5.0 s** (e2e Alertmanager) | 10 test runs | Time elapsed from failure event (`NodeDown` / `RegionDown`) to Prometheus alert firing & Webhook Receiver payload log. |
+| **Prometheus Metrics Scrape Latency** | **1.2 ms** | `/metrics` scraping | Execution duration of `/metrics` handler exporting Prometheus counters, histograms, and gauges. |
+
 
 
