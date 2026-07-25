@@ -14,8 +14,14 @@ service NodeAgent {
   // BackupDatabase is stubbed in this phase.
   rpc BackupDatabase(BackupDatabaseRequest) returns (BackupDatabaseResponse);
 
-  // RestoreDatabase is stubbed in this phase.
+  // RestoreDatabase restores database from snapshot.
   rpc RestoreDatabase(RestoreDatabaseRequest) returns (RestoreDatabaseResponse);
+
+  // InsertVector stores vector embedding with metadata into storage engine.
+  rpc InsertVector(InsertVectorRequest) returns (InsertVectorResponse);
+
+  // SearchVector performs exact or HNSW ANN vector similarity search with metadata filtering.
+  rpc SearchVector(SearchVectorRequest) returns (SearchVectorResponse);
 }
 
 message CreateDatabaseRequest {
@@ -57,3 +63,37 @@ message RestoreDatabaseResponse {
   bool success = 1;
   string error = 2;
 }
+
+message InsertVectorRequest {
+  string database_id = 1;
+  string id = 2;
+  bytes data = 3;
+  repeated float embedding = 4;
+  map<string, string> metadata = 5;
+}
+
+message InsertVectorResponse {
+  bool success = 1;
+  uint64 lsn = 2;
+  string error = 3;
+}
+
+message SearchVectorRequest {
+  string database_id = 1;
+  repeated float query_embedding = 2;
+  int32 top_k = 3;
+  string filter_expression = 4;
+  bool exact = 5;
+}
+
+message VectorSearchResult {
+  string id = 1;
+  float similarity = 2;
+}
+
+message SearchVectorResponse {
+  bool success = 1;
+  repeated VectorSearchResult results = 2;
+  string error = 3;
+}
+

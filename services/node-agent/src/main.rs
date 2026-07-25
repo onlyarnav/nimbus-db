@@ -156,6 +156,86 @@ impl NodeAgent for NodeAgentService {
             }
         }
     }
+
+    async fn insert_vector(
+        &self,
+        request: Request<InsertVectorRequest>,
+    ) -> Result<Response<InsertVectorResponse>, Status> {
+        let req = request.into_inner();
+        let db_id = if req.database_id.is_empty() {
+            "default".to_string()
+        } else {
+            req.database_id
+        };
+
+        let mut engines = self.engines.lock().map_err(|e| Status::internal(e.to_string()))?;
+        let db_dir = format!("{}/{}", self.data_root, db_id);
+
+        let engine = match engines.get_mut(&db_id) {
+            Some(e) => e,
+            None => {
+                let e = StorageEngine::open(&db_id, &db_dir, ReplicationRole::Leader)
+                    .map_err(|err| Status::internal(format!("Failed to open db: {}", err)))?;
+                engines.insert(db_id.clone(), e);
+                engines.get_mut(&db_id).unwrap()
+            }
+        };
+
+        match engine.insert_vector(req.id, req.data, req.embedding, req.metadata) {
+            Ok(lsn) => Ok(Response::new(InsertVectorResponse {
+                success: true,
+                lsn,
+                error: "".to_string(),
+            })),
+            Err(err) => Ok(Response::new(InsertVectorResponse {
+                success: false,
+                lsn: 0,
+                error: err,
+            })),
+        }
+    }
+
+    async fn search_vector(
+        &self,
+        request: Request<SearchVectorRequest>,
+    ) -> Result<Response<SearchVectorResponse>, Status> {
+        let req = request.into_inner();
+        let db_id = if req.database_id.is_empty() {
+            "default".to_string()
+        } else {
+            req.database_id
+        };
+
+        let mut engines = self.engines.lock().map_err(|e| Status::internal(e.to_string()))?;
+        let db_dir = format!("{}/{}", self.data_root, db_id);
+
+        let engine = match engines.get_mut(&db_id) {
+            Some(e) => e,
+            None => {
+                let e = StorageEngine::open(&db_id, &db_dir, ReplicationRole::Leader)
+                    .map_err(|err| Status::internal(format!("Failed to open db: {}", err)))?;
+                engines.insert(db_id.clone(), e);
+                engines.get_mut(&db_id).unwrap()
+            }
+        };
+
+        let top_k = if req.top_k <= 0 { 10 } else { req.top_k as usize };
+        let raw_results = engine.search_vector(&req.query_embedding, top_k, &req.filter_expression, req.exact);
+
+        let results = raw_results
+            .into_iter()
+            .map(|r| VectorSearchResult {
+                id: r.id,
+                similarity: r.similarity,
+            })
+            .collect();
+
+        Ok(Response::new(SearchVectorResponse {
+            success: true,
+            results,
+            error: "".to_string(),
+        }))
+    }
 }
 
 #[tokio::main]
