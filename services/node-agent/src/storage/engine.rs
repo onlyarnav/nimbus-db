@@ -7,6 +7,7 @@ use crate::storage::page::{PageManager, PageType};
 use crate::storage::recovery::{RecordValue, RecoveryEngine};
 use crate::storage::replication::{ReplicationEngine, ReplicationRole};
 use crate::storage::snapshot::SnapshotManager;
+use crate::storage::vector::{cosine_similarity, matches_filter, HnswIndex, SearchResult, VectorRecord};
 use crate::storage::wal::{OpType, SyncPolicy, WalManager};
 
 pub struct StorageEngine {
@@ -16,8 +17,10 @@ pub struct StorageEngine {
     pub wal: WalManager,
     pub hash_idx: HashIndex,
     pub btree_idx: BTreeIndex,
+    pub hnsw_idx: HnswIndex,
     pub replication: ReplicationEngine,
     pub active_records: HashMap<String, RecordValue>,
+    pub vector_records: HashMap<String, VectorRecord>,
 }
 
 impl StorageEngine {
@@ -40,11 +43,20 @@ impl StorageEngine {
 
         let mut hash_idx = HashIndex::new();
         let mut btree_idx = BTreeIndex::new();
+        let mut hnsw_idx = HnswIndex::default_hnsw();
+        let mut vector_records = HashMap::new();
 
-        // Rebuild indexes from recovered state
+        // Rebuild indexes and vector state from recovered WAL state
         for (k, v) in &active_records {
             hash_idx.insert(k.clone(), 0, 0, v.lsn);
             btree_idx.insert(k.clone(), 0, 0, v.lsn);
+
+            if k.starts_with("vec:") {
+                if let Ok(vrec) = VectorRecord::from_bytes(&v.value) {
+                    hnsw_idx.insert(vrec.id.clone(), vrec.embedding.clone());
+                    vector_records.insert(vrec.id.clone(), vrec);
+                }
+            }
         }
 
         let replication = ReplicationEngine::new(role, 3000);
@@ -56,8 +68,10 @@ impl StorageEngine {
             wal,
             hash_idx,
             btree_idx,
+            hnsw_idx,
             replication,
             active_records,
+            vector_records,
         })
     }
 
@@ -102,6 +116,88 @@ impl StorageEngine {
         Ok(lsn)
     }
 
+    pub fn insert_vector(
+        &mut self,
+        id: String,
+        data: Vec<u8>,
+        embedding: Vec<f32>,
+        metadata: HashMap<String, String>,
+    ) -> Result<u64, String> {
+        let vrec = VectorRecord::new(id.clone(), data, embedding.clone(), metadata);
+        let val_bytes = vrec.to_bytes()?;
+        let wal_key = format!("vec:{}", id);
+
+        // Durability first: append to WAL and page store
+        let lsn = self.put(wal_key, val_bytes)?;
+
+        // Update in-memory vector index and lookup table
+        self.hnsw_idx.insert(id.clone(), embedding);
+        self.vector_records.insert(id, vrec);
+
+        Ok(lsn)
+    }
+
+    pub fn search_vector(
+        &self,
+        query_embedding: &[f32],
+        top_k: usize,
+        filter_expr: &str,
+        exact: bool,
+    ) -> Vec<SearchResult> {
+        if exact || !filter_expr.trim().is_empty() {
+            // Brute-force exact cosine similarity with pre-filtering
+            let mut results = Vec::new();
+            for (v_id, vrec) in &self.vector_records {
+                if matches_filter(&vrec.metadata, filter_expr) {
+                    let sim = cosine_similarity(query_embedding, &vrec.embedding);
+                    results.push(SearchResult {
+                        id: v_id.clone(),
+                        similarity: sim,
+                    });
+                }
+            }
+
+            results.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap());
+            if results.len() > top_k {
+                results.truncate(top_k);
+            }
+            results
+        } else {
+            // HNSW ANN graph search
+            self.hnsw_idx.search(query_embedding, top_k)
+        }
+    }
+
+    pub fn hybrid_search(
+        &self,
+        query_embedding: &[f32],
+        predicate_start: &str,
+        predicate_end: &str,
+        top_k: usize,
+    ) -> Vec<SearchResult> {
+        // 1. Query B+Tree index for keys matching the range predicate
+        let btree_records = self.btree_idx.range_scan(predicate_start, predicate_end);
+        let mut results = Vec::new();
+
+        for r in btree_records {
+            let vec_id = r.key.strip_prefix("vec:").unwrap_or(&r.key);
+            if let Some(vrec) = self.vector_records.get(vec_id) {
+                let sim = cosine_similarity(query_embedding, &vrec.embedding);
+                results.push(SearchResult {
+                    id: vec_id.to_string(),
+                    similarity: sim,
+                });
+            }
+        }
+
+        results.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap());
+        if results.len() > top_k {
+            results.truncate(top_k);
+        }
+
+        results
+    }
+
     pub fn get(&self, key: &str) -> Option<Vec<u8>> {
         self.active_records.get(key).map(|r| r.value.clone())
     }
@@ -115,6 +211,10 @@ impl StorageEngine {
         self.hash_idx.remove(key);
         self.btree_idx.remove(key);
         self.active_records.remove(key);
+
+        let vec_id = key.strip_prefix("vec:").unwrap_or(key);
+        self.vector_records.remove(vec_id);
+        self.hnsw_idx.remove(vec_id);
 
         Ok(true)
     }
@@ -132,6 +232,8 @@ impl StorageEngine {
     pub fn restore(&mut self, snapshot_path: &str) -> Result<(), String> {
         let snap_data = SnapshotManager::load_snapshot(snapshot_path)?;
         self.active_records.clear();
+        self.vector_records.clear();
+        self.hnsw_idx.clear();
         self.hash_idx.clear();
         self.btree_idx = BTreeIndex::new();
 

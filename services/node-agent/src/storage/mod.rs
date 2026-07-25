@@ -6,4 +6,6 @@ pub mod btree_index;
 pub mod snapshot;
 pub mod compaction;
 pub mod replication;
+pub mod vector;
 pub mod engine;
+
