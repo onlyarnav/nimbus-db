@@ -20,6 +20,7 @@ import (
 	grpcserver "github.com/onlyarnav/nimbusdb/services/metadata-service/grpc"
 	"github.com/onlyarnav/nimbusdb/services/metadata-service/handlers"
 	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
+	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 )
 
 // Embed the SQL migrations directory into the binary
@@ -66,6 +67,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handlers.HealthHandler(pool))
 	mux.HandleFunc("/v1/nodes", handlers.NodesHandler(pool))
+	mux.Handle("/metrics", telemetry.MetricsHandler())
+
 
 	// Setup HTTP server with robust timeouts
 	serverAddr := fmt.Sprintf(":%s", cfg.Port)

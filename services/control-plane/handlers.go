@@ -14,6 +14,7 @@ import (
 
 	pb "github.com/onlyarnav/nimbusdb/services/control-plane/proto/metadata"
 	pbAgent "github.com/onlyarnav/nimbusdb/services/control-plane/proto/nodeagent"
+	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 )
 
 var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
@@ -57,6 +58,7 @@ func (h *Handlers) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/databases", h.handleListDatabases)
 	mux.HandleFunc("DELETE /v1/databases/{id}", h.handleDeleteDatabase)
 	mux.HandleFunc("GET /health", h.handleHealth)
+	mux.Handle("GET /metrics", telemetry.MetricsHandler())
 }
 
 func (h *Handlers) handleCreateDatabase(w http.ResponseWriter, r *http.Request) {

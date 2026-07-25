@@ -9,6 +9,7 @@ import (
 	"github.com/onlyarnav/nimbusdb/services/gateway/router"
 	"github.com/onlyarnav/nimbusdb/services/metadata-service/region"
 	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
+	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 )
 
 type CreateDatabaseRequest struct {
@@ -46,6 +47,7 @@ func (g *GatewayHandlers) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /v1/databases/{id}", g.handleDeleteDatabase)
 	mux.HandleFunc("GET /v1/regions", g.handleListRegions)
 	mux.HandleFunc("GET /health", g.handleHealth)
+	mux.Handle("GET /metrics", telemetry.MetricsHandler())
 }
 
 func (g *GatewayHandlers) handleCreateDatabase(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +66,12 @@ func (g *GatewayHandlers) handleCreateDatabase(w http.ResponseWriter, r *http.Re
 	}
 
 	ctx := r.Context()
+
+	telemetry.LogStructuredEvent(ctx, "gateway", "INFO", "provision_started", map[string]interface{}{
+		"database_name":    req.Name,
+		"preferred_region": req.PreferredRegion,
+		"cluster_id":       req.ClusterID,
+	})
 
 	// 1. Fetch current node health state from Metadata Service
 	nodesRes, err := g.metadataClient.GetNodes(ctx, &pb.GetNodesRequest{})
@@ -89,6 +97,11 @@ func (g *GatewayHandlers) handleCreateDatabase(w http.ResponseWriter, r *http.Re
 	routeRes, err := router.SelectRegion(req.PreferredRegion, regionHealthMap)
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to route database creation request", "error", err)
+		telemetry.LogStructuredEvent(ctx, "gateway", "ERROR", "database_create_failed", map[string]interface{}{
+			"database_name": req.Name,
+			"error":         err.Error(),
+		})
+		telemetry.ErrorsTotal.WithLabelValues("gateway", "create_database", "routing_failed").Inc()
 		http.Error(w, "routing failed: "+err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -102,11 +115,25 @@ func (g *GatewayHandlers) handleCreateDatabase(w http.ResponseWriter, r *http.Re
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to register database in metadata service", "error", err)
+		telemetry.LogStructuredEvent(ctx, "gateway", "ERROR", "database_create_failed", map[string]interface{}{
+			"database_name": req.Name,
+			"error":         err.Error(),
+		})
+		telemetry.ErrorsTotal.WithLabelValues("gateway", "create_database", "metadata_failed").Inc()
 		http.Error(w, "internal server error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	dbID := metaRes.GetDatabaseId()
+
+	telemetry.LogStructuredEvent(ctx, "gateway", "INFO", "database_created", map[string]interface{}{
+		"database_id":       dbID,
+		"database_name":     req.Name,
+		"served_region":     routeRes.ServedRegion,
+		"fallback_rerouted": routeRes.FallbackRerouted,
+	})
+
+	telemetry.RequestsTotal.WithLabelValues("gateway", "create_database", "202").Inc()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)

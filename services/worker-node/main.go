@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 	"github.com/onlyarnav/nimbusdb/services/worker-node/agent"
 	"github.com/onlyarnav/nimbusdb/services/worker-node/config"
 	pb "github.com/onlyarnav/nimbusdb/services/worker-node/proto"
@@ -116,6 +117,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("injected"))
 	})
+	mux.Handle("/metrics", telemetry.MetricsHandler())
 
 	debugServer := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.DebugPort),
@@ -180,6 +182,10 @@ func main() {
 				cpu = randomWalk(cpu)
 				mem = randomWalk(mem)
 				disk = randomWalk(disk)
+
+				telemetry.CPUUsagePercent.WithLabelValues(nodeID, cfg.Hostname).Set(float64(cpu))
+				telemetry.MemoryUsagePercent.WithLabelValues(nodeID, cfg.Hostname).Set(float64(mem))
+				telemetry.DiskUsagePercent.WithLabelValues(nodeID, cfg.Hostname).Set(float64(disk))
 
 				// Log that this statistics trace is simulated / fake
 				slog.Info("sending simulated statistics heartbeat",

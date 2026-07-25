@@ -5,9 +5,13 @@ go 1.25.0
 require (
 	github.com/golang-migrate/migrate/v4 v4.17.1
 	github.com/jackc/pgx/v5 v5.6.0
+	github.com/onlyarnav/nimbusdb/services/observability v0.0.0
 	google.golang.org/grpc v1.82.0
 	google.golang.org/protobuf v1.36.11
 )
+
+replace github.com/onlyarnav/nimbusdb/services/observability => ../observability
+
 
 require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect

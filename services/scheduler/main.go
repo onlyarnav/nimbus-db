@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 	"github.com/onlyarnav/nimbusdb/services/scheduler/config"
 	schedgrpc "github.com/onlyarnav/nimbusdb/services/scheduler/grpc"
 	pb "github.com/onlyarnav/nimbusdb/services/scheduler/proto"
@@ -29,6 +31,18 @@ func main() {
 	// Context for graceful shutdowns
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	// Start HTTP metrics & health server on port 9091
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", telemetry.MetricsHandler())
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"UP","service":"scheduler"}`))
+	})
+	httpSrv := &http.Server{Addr: ":9091", Handler: mux}
+	go func() {
+		_ = httpSrv.ListenAndServe()
+	}()
 
 	// Dial Metadata Service gRPC server
 	slog.Info("connecting to metadata service", "address", cfg.MetadataGRPCAddr)
