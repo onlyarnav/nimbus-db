@@ -3,19 +3,22 @@ module github.com/onlyarnav/nimbusdb/tests/integration
 go 1.25.0
 
 require (
+	github.com/onlyarnav/nimbusdb/services/auth-service v0.0.0
 	github.com/onlyarnav/nimbusdb/services/control-plane v0.0.0
-	github.com/onlyarnav/nimbusdb/services/deployment-controller v0.0.0-00010101000000-000000000000
+	github.com/onlyarnav/nimbusdb/services/deployment-controller v0.0.0
 	github.com/onlyarnav/nimbusdb/services/gateway v0.0.0
 	github.com/onlyarnav/nimbusdb/services/metadata-service v0.0.0
 	github.com/onlyarnav/nimbusdb/services/observability v0.0.0
-	github.com/onlyarnav/nimbusdb/services/scheduler v0.0.0-00010101000000-000000000000
-	github.com/onlyarnav/nimbusdb/services/sla-monitor v0.0.0-00010101000000-000000000000
+	github.com/onlyarnav/nimbusdb/services/scheduler v0.0.0
+	github.com/onlyarnav/nimbusdb/services/sla-monitor v0.0.0
 	github.com/onlyarnav/nimbusdb/services/worker-node v0.0.0
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/sdk v1.43.0
 	google.golang.org/grpc v1.82.0
 	google.golang.org/protobuf v1.36.11
 )
+
+replace github.com/onlyarnav/nimbusdb/services/auth-service => ../../services/auth-service
 
 replace github.com/onlyarnav/nimbusdb/services/metadata-service => ../../services/metadata-service
 
