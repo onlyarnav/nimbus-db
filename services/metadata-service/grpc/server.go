@@ -443,3 +443,26 @@ func (s *Server) DeleteDatabaseRecord(ctx context.Context, req *pb.DeleteDatabas
 	return &pb.DeleteDatabaseRecordResponse{Success: true}, nil
 }
 
+// UpdateNodeStatus explicitly changes a node's status field (e.g. to 'draining' or 'drained').
+func (s *Server) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeStatusRequest) (*pb.UpdateNodeStatusResponse, error) {
+	nodeID := req.GetNodeId()
+	statusStr := req.GetStatus()
+
+	if nodeID == "" || statusStr == "" {
+		return nil, status.Error(codes.InvalidArgument, "node_id and status are required")
+	}
+
+	cmd, err := s.db.Exec(ctx, "UPDATE nodes SET status = $1 WHERE id = $2", statusStr, nodeID)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to update node status", "node_id", nodeID, "status", statusStr, "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to update node status: %v", err)
+	}
+
+	if cmd.RowsAffected() == 0 {
+		return nil, status.Errorf(codes.NotFound, "node %q not found", nodeID)
+	}
+
+	slog.InfoContext(ctx, "node status updated", "node_id", nodeID, "new_status", statusStr)
+	return &pb.UpdateNodeStatusResponse{Success: true}, nil
+}
+
