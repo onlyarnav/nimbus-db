@@ -33,17 +33,23 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.x'
-          cache-dependency-path: services/metadata-service/go.sum
+          go-version: '1.24.x'
 
-      - name: Install dependencies
+      - name: Test Auth Service
         run: |
-          cd services/metadata-service
-          go mod download
+          cd services/auth-service
+          go test -v ./...
 
-      - name: Run Tests
+      - name: Test Metadata Service
         env:
           DATABASE_URL: postgres://postgres:password@localhost:5432/nimbusdb?sslmode=disable
         run: |
           cd services/metadata-service
           go test -v ./...
+
+      - name: Test Security Integration Suite
+        env:
+          GOLANG_PROTOBUF_REGISTRATION_CONFLICT: warn
+        run: |
+          cd tests/integration
+          go test -v -run TestPhase8 .
