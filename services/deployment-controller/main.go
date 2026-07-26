@@ -13,6 +13,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/deployment-controller/controller"
 	pb "github.com/onlyarnav/nimbusdb/services/deployment-controller/proto"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
@@ -65,7 +66,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	grpcServer := grpc.NewServer()
+	deployRoleMap := map[string]string{
+		"/proto.DeploymentControllerService/StartDeployment":     auth.RoleAdmin,
+		"/proto.DeploymentControllerService/GetDeploymentStatus": auth.RoleReadOnly,
+		"/proto.DeploymentControllerService/TriggerRollback":     auth.RoleAdmin,
+		"/proto.DeploymentControllerService/DrainNode":          auth.RoleAdmin,
+	}
+
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(auth.UnaryServerInterceptor(deployRoleMap)))
 	pb.RegisterDeploymentControllerServiceServer(grpcServer, ctrl)
 
 	go func() {
