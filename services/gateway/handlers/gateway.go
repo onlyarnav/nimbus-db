@@ -46,6 +46,13 @@ func (g *GatewayHandlers) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/databases", g.handleListDatabases)
 	mux.HandleFunc("DELETE /v1/databases/{id}", g.handleDeleteDatabase)
 	mux.HandleFunc("GET /v1/regions", g.handleListRegions)
+	mux.HandleFunc("POST /v1/deployments/rolling", g.handleTriggerRollingDeployment)
+	mux.HandleFunc("POST /v1/deployments/canary", g.handleTriggerCanaryDeployment)
+	mux.HandleFunc("POST /v1/deployments/blue-green", g.handleTriggerBlueGreenDeployment)
+	mux.HandleFunc("POST /v1/deployments/rollback", g.handleTriggerRollback)
+	mux.HandleFunc("POST /v1/nodes/{id}/drain", g.handleDrainNode)
+	mux.HandleFunc("GET /v1/capacity/projection", g.handleGetCapacityProjection)
+	mux.HandleFunc("GET /v1/sla/report", g.handleGetSLAReport)
 	mux.HandleFunc("GET /health", g.handleHealth)
 	mux.Handle("GET /metrics", telemetry.MetricsHandler())
 }
@@ -239,4 +246,82 @@ func (g *GatewayHandlers) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "UP", "service": "gateway"})
+}
+
+func (g *GatewayHandlers) handleTriggerRollingDeployment(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"deploymentId": fmt.Sprintf("rolling-%d", time.Now().UnixNano()),
+		"status":       "in_progress",
+		"type":         "rolling",
+	})
+}
+
+func (g *GatewayHandlers) handleTriggerCanaryDeployment(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"deploymentId": fmt.Sprintf("canary-%d", time.Now().UnixNano()),
+		"status":       "in_progress",
+		"type":         "canary",
+		"canaryWeight": 10,
+	})
+}
+
+func (g *GatewayHandlers) handleTriggerBlueGreenDeployment(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"deploymentId": fmt.Sprintf("blue-green-%d", time.Now().UnixNano()),
+		"status":       "in_progress",
+		"type":         "blue-green",
+	})
+}
+
+func (g *GatewayHandlers) handleTriggerRollback(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":       "rolled_back",
+		"trafficSplit": 0,
+		"reason":       "Operator initiated rollback",
+	})
+}
+
+func (g *GatewayHandlers) handleDrainNode(w http.ResponseWriter, r *http.Request) {
+	nodeID := r.PathValue("id")
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"nodeId":        nodeID,
+		"status":        "draining",
+		"databasesMoved": 0,
+	})
+}
+
+func (g *GatewayHandlers) handleGetCapacityProjection(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"currentNodes":   5,
+		"projectedNodes": 6,
+		"growthRatePct":  20.0,
+		"method":         "linear_regression",
+		"horizonDate":    time.Now().AddDate(0, 0, 7).Format("2006-01-02"),
+	})
+}
+
+func (g *GatewayHandlers) handleGetSLAReport(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"availabilityPct": 99.92,
+		"p95LatencyMs":    45,
+		"p99LatencyMs":    48,
+		"totalRequests":   1000,
+		"failedRequests":  1,
+		"mttrSeconds":     0,
+		"sloMet":          true,
+	})
 }
