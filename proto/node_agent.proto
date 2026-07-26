@@ -22,6 +22,19 @@ service NodeAgent {
 
   // SearchVector performs exact or HNSW ANN vector similarity search with metadata filtering.
   rpc SearchVector(SearchVectorRequest) returns (SearchVectorResponse);
+
+  // DrainNode prepares a node for safe shutdown by migrating all hosted databases off the node.
+  rpc DrainNode(DrainNodeRequest) returns (DrainNodeResponse);
+}
+
+message DrainNodeRequest {
+  string node_id = 1;
+}
+
+message DrainNodeResponse {
+  bool success = 1;
+  int32 databases_moved = 2;
+  string error = 3;
 }
 
 message CreateDatabaseRequest {

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v4.25.1
-// source: metadata_service.proto
+// source: proto/metadata_service.proto
 
 package metadata
 
@@ -27,6 +27,7 @@ const (
 	MetadataService_GetDatabase_FullMethodName          = "/metadata.MetadataService/GetDatabase"
 	MetadataService_ListDatabases_FullMethodName        = "/metadata.MetadataService/ListDatabases"
 	MetadataService_DeleteDatabaseRecord_FullMethodName = "/metadata.MetadataService/DeleteDatabaseRecord"
+	MetadataService_UpdateNodeStatus_FullMethodName     = "/metadata.MetadataService/UpdateNodeStatus"
 )
 
 // MetadataServiceClient is the client API for MetadataService service.
@@ -49,6 +50,8 @@ type MetadataServiceClient interface {
 	ListDatabases(ctx context.Context, in *ListDatabasesRequest, opts ...grpc.CallOption) (*ListDatabasesResponse, error)
 	// DeleteDatabaseRecord deletes the database metadata.
 	DeleteDatabaseRecord(ctx context.Context, in *DeleteDatabaseRecordRequest, opts ...grpc.CallOption) (*DeleteDatabaseRecordResponse, error)
+	// UpdateNodeStatus updates the status field of a node (e.g. 'draining', 'drained', 'healthy').
+	UpdateNodeStatus(ctx context.Context, in *UpdateNodeStatusRequest, opts ...grpc.CallOption) (*UpdateNodeStatusResponse, error)
 }
 
 type metadataServiceClient struct {
@@ -139,6 +142,16 @@ func (c *metadataServiceClient) DeleteDatabaseRecord(ctx context.Context, in *De
 	return out, nil
 }
 
+func (c *metadataServiceClient) UpdateNodeStatus(ctx context.Context, in *UpdateNodeStatusRequest, opts ...grpc.CallOption) (*UpdateNodeStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateNodeStatusResponse)
+	err := c.cc.Invoke(ctx, MetadataService_UpdateNodeStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MetadataServiceServer is the server API for MetadataService service.
 // All implementations must embed UnimplementedMetadataServiceServer
 // for forward compatibility.
@@ -159,6 +172,8 @@ type MetadataServiceServer interface {
 	ListDatabases(context.Context, *ListDatabasesRequest) (*ListDatabasesResponse, error)
 	// DeleteDatabaseRecord deletes the database metadata.
 	DeleteDatabaseRecord(context.Context, *DeleteDatabaseRecordRequest) (*DeleteDatabaseRecordResponse, error)
+	// UpdateNodeStatus updates the status field of a node (e.g. 'draining', 'drained', 'healthy').
+	UpdateNodeStatus(context.Context, *UpdateNodeStatusRequest) (*UpdateNodeStatusResponse, error)
 	mustEmbedUnimplementedMetadataServiceServer()
 }
 
@@ -192,6 +207,9 @@ func (UnimplementedMetadataServiceServer) ListDatabases(context.Context, *ListDa
 }
 func (UnimplementedMetadataServiceServer) DeleteDatabaseRecord(context.Context, *DeleteDatabaseRecordRequest) (*DeleteDatabaseRecordResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteDatabaseRecord not implemented")
+}
+func (UnimplementedMetadataServiceServer) UpdateNodeStatus(context.Context, *UpdateNodeStatusRequest) (*UpdateNodeStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateNodeStatus not implemented")
 }
 func (UnimplementedMetadataServiceServer) mustEmbedUnimplementedMetadataServiceServer() {}
 func (UnimplementedMetadataServiceServer) testEmbeddedByValue()                         {}
@@ -358,6 +376,24 @@ func _MetadataService_DeleteDatabaseRecord_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MetadataService_UpdateNodeStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateNodeStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetadataServiceServer).UpdateNodeStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetadataService_UpdateNodeStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetadataServiceServer).UpdateNodeStatus(ctx, req.(*UpdateNodeStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MetadataService_ServiceDesc is the grpc.ServiceDesc for MetadataService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -397,9 +433,13 @@ var MetadataService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "DeleteDatabaseRecord",
 			Handler:    _MetadataService_DeleteDatabaseRecord_Handler,
 		},
+		{
+			MethodName: "UpdateNodeStatus",
+			Handler:    _MetadataService_UpdateNodeStatus_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "metadata_service.proto",
+	Metadata: "proto/metadata_service.proto",
 }
 
 const (
@@ -507,5 +547,5 @@ var SchedulerService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "metadata_service.proto",
+	Metadata: "proto/metadata_service.proto",
 }

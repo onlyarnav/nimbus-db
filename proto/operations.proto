@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package operations;
+
+option go_package = "github.com/onlyarnav/nimbusdb/services/deployment-controller/proto;operations";
+
+// DeploymentController orchestrates rolling, canary, and blue-green deployments with auto-rollback.
+service DeploymentControllerService {
+  rpc StartDeployment(StartDeploymentRequest) returns (StartDeploymentResponse);
+  rpc GetDeploymentStatus(GetDeploymentStatusRequest) returns (GetDeploymentStatusResponse);
+  rpc TriggerRollback(TriggerRollbackRequest) returns (TriggerRollbackResponse);
+  rpc DrainNode(DrainNodeRequest) returns (DrainNodeResponse);
+}
+
+message StartDeploymentRequest {
+  string deployment_type = 1; // "rolling", "canary", "blue-green"
+  string target_version = 2;
+  int32 canary_weight = 3;    // e.g. 10 for 10%
+  int32 observation_seconds = 4;
+}
+
+message StartDeploymentResponse {
+  string deployment_id = 1;
+  string status = 2;
+}
+
+message GetDeploymentStatusRequest {
+  string deployment_id = 1;
+}
+
+message GetDeploymentStatusResponse {
+  string deployment_id = 1;
+  string deployment_type = 2;
+  string target_version = 3;
+  string status = 4; // "in_progress", "completed", "failed", "rolled_back"
+  int32 traffic_split = 5;
+  string error_message = 6;
+}
+
+message TriggerRollbackRequest {
+  string deployment_id = 1;
+  string reason = 2;
+}
+
+message TriggerRollbackResponse {
+  bool success = 1;
+  string status = 2;
+}
+
+message DrainNodeRequest {
+  string node_id = 1;
+}
+
+message DrainNodeResponse {
+  bool success = 1;
+  int32 databases_moved = 2;
+  string error = 3;
+}
+
+// CapacityPlanner predicts cluster node needs based on historical load metrics.
+service CapacityPlannerService {
+  rpc PredictCapacity(PredictCapacityRequest) returns (PredictCapacityResponse);
+}
+
+message PredictCapacityRequest {
+  int32 horizon_days = 1;
+  string metric = 2; // "cpu", "memory", "rps"
+}
+
+message PredictCapacityResponse {
+  int32 current_nodes = 1;
+  int32 projected_nodes = 2;
+  double growth_rate_pct = 3;
+  string method = 4; // "linear_regression", "moving_average"
+  string horizon_date = 5;
+}
+
+// SLAMonitor tracks availability %, latency percentiles, and MTTR against an SLO.
+service SLAMonitorService {
+  rpc RecordEvent(RecordEventRequest) returns (RecordEventResponse);
+  rpc GetSLAReport(GetSLAReportRequest) returns (GetSLAReportResponse);
+}
+
+message RecordEventRequest {
+  string event_type = 1; // "request_success", "request_failure", "outage_start", "outage_resolved"
+  int64 latency_ms = 2;
+  string service = 3;
+}
+
+message RecordEventResponse {
+  bool success = 1;
+}
+
+message GetSLAReportRequest {
+  int32 window_minutes = 1;
+}
+
+message GetSLAReportResponse {
+  double availability_pct = 1;
+  int64 p95_latency_ms = 2;
+  int64 p99_latency_ms = 3;
+  int64 total_requests = 4;
+  int64 failed_requests = 5;
+  int64 mttr_seconds = 6;
+  bool slo_met = 7; // true if availability >= 99.9%
+}

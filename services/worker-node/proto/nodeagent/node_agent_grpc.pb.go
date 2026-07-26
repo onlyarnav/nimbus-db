@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v4.25.1
-// source: node_agent.proto
+// source: proto/node_agent.proto
 
 package nodeagent
 
@@ -23,6 +23,9 @@ const (
 	NodeAgent_DeleteDatabase_FullMethodName  = "/nodeagent.NodeAgent/DeleteDatabase"
 	NodeAgent_BackupDatabase_FullMethodName  = "/nodeagent.NodeAgent/BackupDatabase"
 	NodeAgent_RestoreDatabase_FullMethodName = "/nodeagent.NodeAgent/RestoreDatabase"
+	NodeAgent_InsertVector_FullMethodName    = "/nodeagent.NodeAgent/InsertVector"
+	NodeAgent_SearchVector_FullMethodName    = "/nodeagent.NodeAgent/SearchVector"
+	NodeAgent_DrainNode_FullMethodName       = "/nodeagent.NodeAgent/DrainNode"
 )
 
 // NodeAgentClient is the client API for NodeAgent service.
@@ -35,8 +38,14 @@ type NodeAgentClient interface {
 	DeleteDatabase(ctx context.Context, in *DeleteDatabaseRequest, opts ...grpc.CallOption) (*DeleteDatabaseResponse, error)
 	// BackupDatabase is stubbed in this phase.
 	BackupDatabase(ctx context.Context, in *BackupDatabaseRequest, opts ...grpc.CallOption) (*BackupDatabaseResponse, error)
-	// RestoreDatabase is stubbed in this phase.
+	// RestoreDatabase restores database from snapshot.
 	RestoreDatabase(ctx context.Context, in *RestoreDatabaseRequest, opts ...grpc.CallOption) (*RestoreDatabaseResponse, error)
+	// InsertVector stores vector embedding with metadata into storage engine.
+	InsertVector(ctx context.Context, in *InsertVectorRequest, opts ...grpc.CallOption) (*InsertVectorResponse, error)
+	// SearchVector performs exact or HNSW ANN vector similarity search with metadata filtering.
+	SearchVector(ctx context.Context, in *SearchVectorRequest, opts ...grpc.CallOption) (*SearchVectorResponse, error)
+	// DrainNode prepares a node for safe shutdown by migrating all hosted databases off the node.
+	DrainNode(ctx context.Context, in *DrainNodeRequest, opts ...grpc.CallOption) (*DrainNodeResponse, error)
 }
 
 type nodeAgentClient struct {
@@ -87,6 +96,36 @@ func (c *nodeAgentClient) RestoreDatabase(ctx context.Context, in *RestoreDataba
 	return out, nil
 }
 
+func (c *nodeAgentClient) InsertVector(ctx context.Context, in *InsertVectorRequest, opts ...grpc.CallOption) (*InsertVectorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InsertVectorResponse)
+	err := c.cc.Invoke(ctx, NodeAgent_InsertVector_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeAgentClient) SearchVector(ctx context.Context, in *SearchVectorRequest, opts ...grpc.CallOption) (*SearchVectorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchVectorResponse)
+	err := c.cc.Invoke(ctx, NodeAgent_SearchVector_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeAgentClient) DrainNode(ctx context.Context, in *DrainNodeRequest, opts ...grpc.CallOption) (*DrainNodeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DrainNodeResponse)
+	err := c.cc.Invoke(ctx, NodeAgent_DrainNode_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NodeAgentServer is the server API for NodeAgent service.
 // All implementations must embed UnimplementedNodeAgentServer
 // for forward compatibility.
@@ -97,8 +136,14 @@ type NodeAgentServer interface {
 	DeleteDatabase(context.Context, *DeleteDatabaseRequest) (*DeleteDatabaseResponse, error)
 	// BackupDatabase is stubbed in this phase.
 	BackupDatabase(context.Context, *BackupDatabaseRequest) (*BackupDatabaseResponse, error)
-	// RestoreDatabase is stubbed in this phase.
+	// RestoreDatabase restores database from snapshot.
 	RestoreDatabase(context.Context, *RestoreDatabaseRequest) (*RestoreDatabaseResponse, error)
+	// InsertVector stores vector embedding with metadata into storage engine.
+	InsertVector(context.Context, *InsertVectorRequest) (*InsertVectorResponse, error)
+	// SearchVector performs exact or HNSW ANN vector similarity search with metadata filtering.
+	SearchVector(context.Context, *SearchVectorRequest) (*SearchVectorResponse, error)
+	// DrainNode prepares a node for safe shutdown by migrating all hosted databases off the node.
+	DrainNode(context.Context, *DrainNodeRequest) (*DrainNodeResponse, error)
 	mustEmbedUnimplementedNodeAgentServer()
 }
 
@@ -120,6 +165,15 @@ func (UnimplementedNodeAgentServer) BackupDatabase(context.Context, *BackupDatab
 }
 func (UnimplementedNodeAgentServer) RestoreDatabase(context.Context, *RestoreDatabaseRequest) (*RestoreDatabaseResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RestoreDatabase not implemented")
+}
+func (UnimplementedNodeAgentServer) InsertVector(context.Context, *InsertVectorRequest) (*InsertVectorResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method InsertVector not implemented")
+}
+func (UnimplementedNodeAgentServer) SearchVector(context.Context, *SearchVectorRequest) (*SearchVectorResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SearchVector not implemented")
+}
+func (UnimplementedNodeAgentServer) DrainNode(context.Context, *DrainNodeRequest) (*DrainNodeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DrainNode not implemented")
 }
 func (UnimplementedNodeAgentServer) mustEmbedUnimplementedNodeAgentServer() {}
 func (UnimplementedNodeAgentServer) testEmbeddedByValue()                   {}
@@ -214,6 +268,60 @@ func _NodeAgent_RestoreDatabase_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NodeAgent_InsertVector_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InsertVectorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeAgentServer).InsertVector(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeAgent_InsertVector_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeAgentServer).InsertVector(ctx, req.(*InsertVectorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeAgent_SearchVector_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchVectorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeAgentServer).SearchVector(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeAgent_SearchVector_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeAgentServer).SearchVector(ctx, req.(*SearchVectorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeAgent_DrainNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DrainNodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeAgentServer).DrainNode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeAgent_DrainNode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeAgentServer).DrainNode(ctx, req.(*DrainNodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NodeAgent_ServiceDesc is the grpc.ServiceDesc for NodeAgent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -237,7 +345,19 @@ var NodeAgent_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "RestoreDatabase",
 			Handler:    _NodeAgent_RestoreDatabase_Handler,
 		},
+		{
+			MethodName: "InsertVector",
+			Handler:    _NodeAgent_InsertVector_Handler,
+		},
+		{
+			MethodName: "SearchVector",
+			Handler:    _NodeAgent_SearchVector_Handler,
+		},
+		{
+			MethodName: "DrainNode",
+			Handler:    _NodeAgent_DrainNode_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "node_agent.proto",
+	Metadata: "proto/node_agent.proto",
 }

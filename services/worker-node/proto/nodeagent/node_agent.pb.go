@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v4.25.1
-// source: node_agent.proto
+// source: proto/node_agent.proto
 
 package nodeagent
 
@@ -21,6 +21,110 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type DrainNodeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DrainNodeRequest) Reset() {
+	*x = DrainNodeRequest{}
+	mi := &file_proto_node_agent_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DrainNodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DrainNodeRequest) ProtoMessage() {}
+
+func (x *DrainNodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_node_agent_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DrainNodeRequest.ProtoReflect.Descriptor instead.
+func (*DrainNodeRequest) Descriptor() ([]byte, []int) {
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *DrainNodeRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+type DrainNodeResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Success        bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	DatabasesMoved int32                  `protobuf:"varint,2,opt,name=databases_moved,json=databasesMoved,proto3" json:"databases_moved,omitempty"`
+	Error          string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *DrainNodeResponse) Reset() {
+	*x = DrainNodeResponse{}
+	mi := &file_proto_node_agent_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DrainNodeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DrainNodeResponse) ProtoMessage() {}
+
+func (x *DrainNodeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_node_agent_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DrainNodeResponse.ProtoReflect.Descriptor instead.
+func (*DrainNodeResponse) Descriptor() ([]byte, []int) {
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *DrainNodeResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *DrainNodeResponse) GetDatabasesMoved() int32 {
+	if x != nil {
+		return x.DatabasesMoved
+	}
+	return 0
+}
+
+func (x *DrainNodeResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
 type CreateDatabaseRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -31,7 +135,7 @@ type CreateDatabaseRequest struct {
 
 func (x *CreateDatabaseRequest) Reset() {
 	*x = CreateDatabaseRequest{}
-	mi := &file_node_agent_proto_msgTypes[0]
+	mi := &file_proto_node_agent_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +147,7 @@ func (x *CreateDatabaseRequest) String() string {
 func (*CreateDatabaseRequest) ProtoMessage() {}
 
 func (x *CreateDatabaseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_node_agent_proto_msgTypes[0]
+	mi := &file_proto_node_agent_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +160,7 @@ func (x *CreateDatabaseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDatabaseRequest.ProtoReflect.Descriptor instead.
 func (*CreateDatabaseRequest) Descriptor() ([]byte, []int) {
-	return file_node_agent_proto_rawDescGZIP(), []int{0}
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CreateDatabaseRequest) GetName() string {
@@ -84,7 +188,7 @@ type CreateDatabaseResponse struct {
 
 func (x *CreateDatabaseResponse) Reset() {
 	*x = CreateDatabaseResponse{}
-	mi := &file_node_agent_proto_msgTypes[1]
+	mi := &file_proto_node_agent_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -96,7 +200,7 @@ func (x *CreateDatabaseResponse) String() string {
 func (*CreateDatabaseResponse) ProtoMessage() {}
 
 func (x *CreateDatabaseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_node_agent_proto_msgTypes[1]
+	mi := &file_proto_node_agent_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -109,7 +213,7 @@ func (x *CreateDatabaseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDatabaseResponse.ProtoReflect.Descriptor instead.
 func (*CreateDatabaseResponse) Descriptor() ([]byte, []int) {
-	return file_node_agent_proto_rawDescGZIP(), []int{1}
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreateDatabaseResponse) GetSuccess() bool {
@@ -142,7 +246,7 @@ type DeleteDatabaseRequest struct {
 
 func (x *DeleteDatabaseRequest) Reset() {
 	*x = DeleteDatabaseRequest{}
-	mi := &file_node_agent_proto_msgTypes[2]
+	mi := &file_proto_node_agent_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -154,7 +258,7 @@ func (x *DeleteDatabaseRequest) String() string {
 func (*DeleteDatabaseRequest) ProtoMessage() {}
 
 func (x *DeleteDatabaseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_node_agent_proto_msgTypes[2]
+	mi := &file_proto_node_agent_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -167,7 +271,7 @@ func (x *DeleteDatabaseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteDatabaseRequest.ProtoReflect.Descriptor instead.
 func (*DeleteDatabaseRequest) Descriptor() ([]byte, []int) {
-	return file_node_agent_proto_rawDescGZIP(), []int{2}
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *DeleteDatabaseRequest) GetDatabaseId() string {
@@ -187,7 +291,7 @@ type DeleteDatabaseResponse struct {
 
 func (x *DeleteDatabaseResponse) Reset() {
 	*x = DeleteDatabaseResponse{}
-	mi := &file_node_agent_proto_msgTypes[3]
+	mi := &file_proto_node_agent_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -199,7 +303,7 @@ func (x *DeleteDatabaseResponse) String() string {
 func (*DeleteDatabaseResponse) ProtoMessage() {}
 
 func (x *DeleteDatabaseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_node_agent_proto_msgTypes[3]
+	mi := &file_proto_node_agent_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -212,7 +316,7 @@ func (x *DeleteDatabaseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteDatabaseResponse.ProtoReflect.Descriptor instead.
 func (*DeleteDatabaseResponse) Descriptor() ([]byte, []int) {
-	return file_node_agent_proto_rawDescGZIP(), []int{3}
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DeleteDatabaseResponse) GetSuccess() bool {
@@ -238,7 +342,7 @@ type BackupDatabaseRequest struct {
 
 func (x *BackupDatabaseRequest) Reset() {
 	*x = BackupDatabaseRequest{}
-	mi := &file_node_agent_proto_msgTypes[4]
+	mi := &file_proto_node_agent_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -250,7 +354,7 @@ func (x *BackupDatabaseRequest) String() string {
 func (*BackupDatabaseRequest) ProtoMessage() {}
 
 func (x *BackupDatabaseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_node_agent_proto_msgTypes[4]
+	mi := &file_proto_node_agent_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -263,7 +367,7 @@ func (x *BackupDatabaseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackupDatabaseRequest.ProtoReflect.Descriptor instead.
 func (*BackupDatabaseRequest) Descriptor() ([]byte, []int) {
-	return file_node_agent_proto_rawDescGZIP(), []int{4}
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *BackupDatabaseRequest) GetDatabaseId() string {
@@ -284,7 +388,7 @@ type BackupDatabaseResponse struct {
 
 func (x *BackupDatabaseResponse) Reset() {
 	*x = BackupDatabaseResponse{}
-	mi := &file_node_agent_proto_msgTypes[5]
+	mi := &file_proto_node_agent_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -296,7 +400,7 @@ func (x *BackupDatabaseResponse) String() string {
 func (*BackupDatabaseResponse) ProtoMessage() {}
 
 func (x *BackupDatabaseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_node_agent_proto_msgTypes[5]
+	mi := &file_proto_node_agent_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -309,7 +413,7 @@ func (x *BackupDatabaseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackupDatabaseResponse.ProtoReflect.Descriptor instead.
 func (*BackupDatabaseResponse) Descriptor() ([]byte, []int) {
-	return file_node_agent_proto_rawDescGZIP(), []int{5}
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *BackupDatabaseResponse) GetSuccess() bool {
@@ -343,7 +447,7 @@ type RestoreDatabaseRequest struct {
 
 func (x *RestoreDatabaseRequest) Reset() {
 	*x = RestoreDatabaseRequest{}
-	mi := &file_node_agent_proto_msgTypes[6]
+	mi := &file_proto_node_agent_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -355,7 +459,7 @@ func (x *RestoreDatabaseRequest) String() string {
 func (*RestoreDatabaseRequest) ProtoMessage() {}
 
 func (x *RestoreDatabaseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_node_agent_proto_msgTypes[6]
+	mi := &file_proto_node_agent_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -368,7 +472,7 @@ func (x *RestoreDatabaseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestoreDatabaseRequest.ProtoReflect.Descriptor instead.
 func (*RestoreDatabaseRequest) Descriptor() ([]byte, []int) {
-	return file_node_agent_proto_rawDescGZIP(), []int{6}
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *RestoreDatabaseRequest) GetDatabaseId() string {
@@ -395,7 +499,7 @@ type RestoreDatabaseResponse struct {
 
 func (x *RestoreDatabaseResponse) Reset() {
 	*x = RestoreDatabaseResponse{}
-	mi := &file_node_agent_proto_msgTypes[7]
+	mi := &file_proto_node_agent_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -407,7 +511,7 @@ func (x *RestoreDatabaseResponse) String() string {
 func (*RestoreDatabaseResponse) ProtoMessage() {}
 
 func (x *RestoreDatabaseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_node_agent_proto_msgTypes[7]
+	mi := &file_proto_node_agent_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -420,7 +524,7 @@ func (x *RestoreDatabaseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestoreDatabaseResponse.ProtoReflect.Descriptor instead.
 func (*RestoreDatabaseResponse) Descriptor() ([]byte, []int) {
-	return file_node_agent_proto_rawDescGZIP(), []int{7}
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *RestoreDatabaseResponse) GetSuccess() bool {
@@ -437,11 +541,341 @@ func (x *RestoreDatabaseResponse) GetError() string {
 	return ""
 }
 
-var File_node_agent_proto protoreflect.FileDescriptor
+type InsertVectorRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DatabaseId    string                 `protobuf:"bytes,1,opt,name=database_id,json=databaseId,proto3" json:"database_id,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Data          []byte                 `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	Embedding     []float32              `protobuf:"fixed32,4,rep,packed,name=embedding,proto3" json:"embedding,omitempty"`
+	Metadata      map[string]string      `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
 
-const file_node_agent_proto_rawDesc = "" +
+func (x *InsertVectorRequest) Reset() {
+	*x = InsertVectorRequest{}
+	mi := &file_proto_node_agent_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InsertVectorRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InsertVectorRequest) ProtoMessage() {}
+
+func (x *InsertVectorRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_node_agent_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InsertVectorRequest.ProtoReflect.Descriptor instead.
+func (*InsertVectorRequest) Descriptor() ([]byte, []int) {
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *InsertVectorRequest) GetDatabaseId() string {
+	if x != nil {
+		return x.DatabaseId
+	}
+	return ""
+}
+
+func (x *InsertVectorRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *InsertVectorRequest) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *InsertVectorRequest) GetEmbedding() []float32 {
+	if x != nil {
+		return x.Embedding
+	}
+	return nil
+}
+
+func (x *InsertVectorRequest) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+type InsertVectorResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Lsn           uint64                 `protobuf:"varint,2,opt,name=lsn,proto3" json:"lsn,omitempty"`
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InsertVectorResponse) Reset() {
+	*x = InsertVectorResponse{}
+	mi := &file_proto_node_agent_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InsertVectorResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InsertVectorResponse) ProtoMessage() {}
+
+func (x *InsertVectorResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_node_agent_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InsertVectorResponse.ProtoReflect.Descriptor instead.
+func (*InsertVectorResponse) Descriptor() ([]byte, []int) {
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *InsertVectorResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *InsertVectorResponse) GetLsn() uint64 {
+	if x != nil {
+		return x.Lsn
+	}
+	return 0
+}
+
+func (x *InsertVectorResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+type SearchVectorRequest struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	DatabaseId       string                 `protobuf:"bytes,1,opt,name=database_id,json=databaseId,proto3" json:"database_id,omitempty"`
+	QueryEmbedding   []float32              `protobuf:"fixed32,2,rep,packed,name=query_embedding,json=queryEmbedding,proto3" json:"query_embedding,omitempty"`
+	TopK             int32                  `protobuf:"varint,3,opt,name=top_k,json=topK,proto3" json:"top_k,omitempty"`
+	FilterExpression string                 `protobuf:"bytes,4,opt,name=filter_expression,json=filterExpression,proto3" json:"filter_expression,omitempty"`
+	Exact            bool                   `protobuf:"varint,5,opt,name=exact,proto3" json:"exact,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *SearchVectorRequest) Reset() {
+	*x = SearchVectorRequest{}
+	mi := &file_proto_node_agent_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchVectorRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchVectorRequest) ProtoMessage() {}
+
+func (x *SearchVectorRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_node_agent_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchVectorRequest.ProtoReflect.Descriptor instead.
+func (*SearchVectorRequest) Descriptor() ([]byte, []int) {
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *SearchVectorRequest) GetDatabaseId() string {
+	if x != nil {
+		return x.DatabaseId
+	}
+	return ""
+}
+
+func (x *SearchVectorRequest) GetQueryEmbedding() []float32 {
+	if x != nil {
+		return x.QueryEmbedding
+	}
+	return nil
+}
+
+func (x *SearchVectorRequest) GetTopK() int32 {
+	if x != nil {
+		return x.TopK
+	}
+	return 0
+}
+
+func (x *SearchVectorRequest) GetFilterExpression() string {
+	if x != nil {
+		return x.FilterExpression
+	}
+	return ""
+}
+
+func (x *SearchVectorRequest) GetExact() bool {
+	if x != nil {
+		return x.Exact
+	}
+	return false
+}
+
+type VectorSearchResult struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Similarity    float32                `protobuf:"fixed32,2,opt,name=similarity,proto3" json:"similarity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VectorSearchResult) Reset() {
+	*x = VectorSearchResult{}
+	mi := &file_proto_node_agent_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VectorSearchResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VectorSearchResult) ProtoMessage() {}
+
+func (x *VectorSearchResult) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_node_agent_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VectorSearchResult.ProtoReflect.Descriptor instead.
+func (*VectorSearchResult) Descriptor() ([]byte, []int) {
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *VectorSearchResult) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *VectorSearchResult) GetSimilarity() float32 {
+	if x != nil {
+		return x.Similarity
+	}
+	return 0
+}
+
+type SearchVectorResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Results       []*VectorSearchResult  `protobuf:"bytes,2,rep,name=results,proto3" json:"results,omitempty"`
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchVectorResponse) Reset() {
+	*x = SearchVectorResponse{}
+	mi := &file_proto_node_agent_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchVectorResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchVectorResponse) ProtoMessage() {}
+
+func (x *SearchVectorResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_node_agent_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchVectorResponse.ProtoReflect.Descriptor instead.
+func (*SearchVectorResponse) Descriptor() ([]byte, []int) {
+	return file_proto_node_agent_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SearchVectorResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *SearchVectorResponse) GetResults() []*VectorSearchResult {
+	if x != nil {
+		return x.Results
+	}
+	return nil
+}
+
+func (x *SearchVectorResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+var File_proto_node_agent_proto protoreflect.FileDescriptor
+
+const file_proto_node_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x10node_agent.proto\x12\tnodeagent\"L\n" +
+	"\x16proto/node_agent.proto\x12\tnodeagent\"+\n" +
+	"\x10DrainNodeRequest\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\"l\n" +
+	"\x11DrainNodeResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12'\n" +
+	"\x0fdatabases_moved\x18\x02 \x01(\x05R\x0edatabasesMoved\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"L\n" +
 	"\x15CreateDatabaseRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1f\n" +
 	"\vdatabase_id\x18\x02 \x01(\tR\n" +
@@ -471,72 +905,121 @@ const file_node_agent_proto_rawDesc = "" +
 	"backupPath\"I\n" +
 	"\x17RestoreDatabaseResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x14\n" +
-	"\x05error\x18\x02 \x01(\tR\x05error2\xea\x02\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error\"\xff\x01\n" +
+	"\x13InsertVectorRequest\x12\x1f\n" +
+	"\vdatabase_id\x18\x01 \x01(\tR\n" +
+	"databaseId\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12\x12\n" +
+	"\x04data\x18\x03 \x01(\fR\x04data\x12\x1c\n" +
+	"\tembedding\x18\x04 \x03(\x02R\tembedding\x12H\n" +
+	"\bmetadata\x18\x05 \x03(\v2,.nodeagent.InsertVectorRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"X\n" +
+	"\x14InsertVectorResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x10\n" +
+	"\x03lsn\x18\x02 \x01(\x04R\x03lsn\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xb7\x01\n" +
+	"\x13SearchVectorRequest\x12\x1f\n" +
+	"\vdatabase_id\x18\x01 \x01(\tR\n" +
+	"databaseId\x12'\n" +
+	"\x0fquery_embedding\x18\x02 \x03(\x02R\x0equeryEmbedding\x12\x13\n" +
+	"\x05top_k\x18\x03 \x01(\x05R\x04topK\x12+\n" +
+	"\x11filter_expression\x18\x04 \x01(\tR\x10filterExpression\x12\x14\n" +
+	"\x05exact\x18\x05 \x01(\bR\x05exact\"D\n" +
+	"\x12VectorSearchResult\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1e\n" +
+	"\n" +
+	"similarity\x18\x02 \x01(\x02R\n" +
+	"similarity\"\x7f\n" +
+	"\x14SearchVectorResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x127\n" +
+	"\aresults\x18\x02 \x03(\v2\x1d.nodeagent.VectorSearchResultR\aresults\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error2\xd4\x04\n" +
 	"\tNodeAgent\x12U\n" +
 	"\x0eCreateDatabase\x12 .nodeagent.CreateDatabaseRequest\x1a!.nodeagent.CreateDatabaseResponse\x12U\n" +
 	"\x0eDeleteDatabase\x12 .nodeagent.DeleteDatabaseRequest\x1a!.nodeagent.DeleteDatabaseResponse\x12U\n" +
 	"\x0eBackupDatabase\x12 .nodeagent.BackupDatabaseRequest\x1a!.nodeagent.BackupDatabaseResponse\x12X\n" +
-	"\x0fRestoreDatabase\x12!.nodeagent.RestoreDatabaseRequest\x1a\".nodeagent.RestoreDatabaseResponseBDZBgithub.com/onlyarnav/nimbusdb/services/worker-node/proto;nodeagentb\x06proto3"
+	"\x0fRestoreDatabase\x12!.nodeagent.RestoreDatabaseRequest\x1a\".nodeagent.RestoreDatabaseResponse\x12O\n" +
+	"\fInsertVector\x12\x1e.nodeagent.InsertVectorRequest\x1a\x1f.nodeagent.InsertVectorResponse\x12O\n" +
+	"\fSearchVector\x12\x1e.nodeagent.SearchVectorRequest\x1a\x1f.nodeagent.SearchVectorResponse\x12F\n" +
+	"\tDrainNode\x12\x1b.nodeagent.DrainNodeRequest\x1a\x1c.nodeagent.DrainNodeResponseBDZBgithub.com/onlyarnav/nimbusdb/services/worker-node/proto;nodeagentb\x06proto3"
 
 var (
-	file_node_agent_proto_rawDescOnce sync.Once
-	file_node_agent_proto_rawDescData []byte
+	file_proto_node_agent_proto_rawDescOnce sync.Once
+	file_proto_node_agent_proto_rawDescData []byte
 )
 
-func file_node_agent_proto_rawDescGZIP() []byte {
-	file_node_agent_proto_rawDescOnce.Do(func() {
-		file_node_agent_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_node_agent_proto_rawDesc), len(file_node_agent_proto_rawDesc)))
+func file_proto_node_agent_proto_rawDescGZIP() []byte {
+	file_proto_node_agent_proto_rawDescOnce.Do(func() {
+		file_proto_node_agent_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_node_agent_proto_rawDesc), len(file_proto_node_agent_proto_rawDesc)))
 	})
-	return file_node_agent_proto_rawDescData
+	return file_proto_node_agent_proto_rawDescData
 }
 
-var file_node_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
-var file_node_agent_proto_goTypes = []any{
-	(*CreateDatabaseRequest)(nil),   // 0: nodeagent.CreateDatabaseRequest
-	(*CreateDatabaseResponse)(nil),  // 1: nodeagent.CreateDatabaseResponse
-	(*DeleteDatabaseRequest)(nil),   // 2: nodeagent.DeleteDatabaseRequest
-	(*DeleteDatabaseResponse)(nil),  // 3: nodeagent.DeleteDatabaseResponse
-	(*BackupDatabaseRequest)(nil),   // 4: nodeagent.BackupDatabaseRequest
-	(*BackupDatabaseResponse)(nil),  // 5: nodeagent.BackupDatabaseResponse
-	(*RestoreDatabaseRequest)(nil),  // 6: nodeagent.RestoreDatabaseRequest
-	(*RestoreDatabaseResponse)(nil), // 7: nodeagent.RestoreDatabaseResponse
+var file_proto_node_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_proto_node_agent_proto_goTypes = []any{
+	(*DrainNodeRequest)(nil),        // 0: nodeagent.DrainNodeRequest
+	(*DrainNodeResponse)(nil),       // 1: nodeagent.DrainNodeResponse
+	(*CreateDatabaseRequest)(nil),   // 2: nodeagent.CreateDatabaseRequest
+	(*CreateDatabaseResponse)(nil),  // 3: nodeagent.CreateDatabaseResponse
+	(*DeleteDatabaseRequest)(nil),   // 4: nodeagent.DeleteDatabaseRequest
+	(*DeleteDatabaseResponse)(nil),  // 5: nodeagent.DeleteDatabaseResponse
+	(*BackupDatabaseRequest)(nil),   // 6: nodeagent.BackupDatabaseRequest
+	(*BackupDatabaseResponse)(nil),  // 7: nodeagent.BackupDatabaseResponse
+	(*RestoreDatabaseRequest)(nil),  // 8: nodeagent.RestoreDatabaseRequest
+	(*RestoreDatabaseResponse)(nil), // 9: nodeagent.RestoreDatabaseResponse
+	(*InsertVectorRequest)(nil),     // 10: nodeagent.InsertVectorRequest
+	(*InsertVectorResponse)(nil),    // 11: nodeagent.InsertVectorResponse
+	(*SearchVectorRequest)(nil),     // 12: nodeagent.SearchVectorRequest
+	(*VectorSearchResult)(nil),      // 13: nodeagent.VectorSearchResult
+	(*SearchVectorResponse)(nil),    // 14: nodeagent.SearchVectorResponse
+	nil,                             // 15: nodeagent.InsertVectorRequest.MetadataEntry
 }
-var file_node_agent_proto_depIdxs = []int32{
-	0, // 0: nodeagent.NodeAgent.CreateDatabase:input_type -> nodeagent.CreateDatabaseRequest
-	2, // 1: nodeagent.NodeAgent.DeleteDatabase:input_type -> nodeagent.DeleteDatabaseRequest
-	4, // 2: nodeagent.NodeAgent.BackupDatabase:input_type -> nodeagent.BackupDatabaseRequest
-	6, // 3: nodeagent.NodeAgent.RestoreDatabase:input_type -> nodeagent.RestoreDatabaseRequest
-	1, // 4: nodeagent.NodeAgent.CreateDatabase:output_type -> nodeagent.CreateDatabaseResponse
-	3, // 5: nodeagent.NodeAgent.DeleteDatabase:output_type -> nodeagent.DeleteDatabaseResponse
-	5, // 6: nodeagent.NodeAgent.BackupDatabase:output_type -> nodeagent.BackupDatabaseResponse
-	7, // 7: nodeagent.NodeAgent.RestoreDatabase:output_type -> nodeagent.RestoreDatabaseResponse
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+var file_proto_node_agent_proto_depIdxs = []int32{
+	15, // 0: nodeagent.InsertVectorRequest.metadata:type_name -> nodeagent.InsertVectorRequest.MetadataEntry
+	13, // 1: nodeagent.SearchVectorResponse.results:type_name -> nodeagent.VectorSearchResult
+	2,  // 2: nodeagent.NodeAgent.CreateDatabase:input_type -> nodeagent.CreateDatabaseRequest
+	4,  // 3: nodeagent.NodeAgent.DeleteDatabase:input_type -> nodeagent.DeleteDatabaseRequest
+	6,  // 4: nodeagent.NodeAgent.BackupDatabase:input_type -> nodeagent.BackupDatabaseRequest
+	8,  // 5: nodeagent.NodeAgent.RestoreDatabase:input_type -> nodeagent.RestoreDatabaseRequest
+	10, // 6: nodeagent.NodeAgent.InsertVector:input_type -> nodeagent.InsertVectorRequest
+	12, // 7: nodeagent.NodeAgent.SearchVector:input_type -> nodeagent.SearchVectorRequest
+	0,  // 8: nodeagent.NodeAgent.DrainNode:input_type -> nodeagent.DrainNodeRequest
+	3,  // 9: nodeagent.NodeAgent.CreateDatabase:output_type -> nodeagent.CreateDatabaseResponse
+	5,  // 10: nodeagent.NodeAgent.DeleteDatabase:output_type -> nodeagent.DeleteDatabaseResponse
+	7,  // 11: nodeagent.NodeAgent.BackupDatabase:output_type -> nodeagent.BackupDatabaseResponse
+	9,  // 12: nodeagent.NodeAgent.RestoreDatabase:output_type -> nodeagent.RestoreDatabaseResponse
+	11, // 13: nodeagent.NodeAgent.InsertVector:output_type -> nodeagent.InsertVectorResponse
+	14, // 14: nodeagent.NodeAgent.SearchVector:output_type -> nodeagent.SearchVectorResponse
+	1,  // 15: nodeagent.NodeAgent.DrainNode:output_type -> nodeagent.DrainNodeResponse
+	9,  // [9:16] is the sub-list for method output_type
+	2,  // [2:9] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_node_agent_proto_init() }
-func file_node_agent_proto_init() {
-	if File_node_agent_proto != nil {
+func init() { file_proto_node_agent_proto_init() }
+func file_proto_node_agent_proto_init() {
+	if File_proto_node_agent_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_node_agent_proto_rawDesc), len(file_node_agent_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_node_agent_proto_rawDesc), len(file_proto_node_agent_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_node_agent_proto_goTypes,
-		DependencyIndexes: file_node_agent_proto_depIdxs,
-		MessageInfos:      file_node_agent_proto_msgTypes,
+		GoTypes:           file_proto_node_agent_proto_goTypes,
+		DependencyIndexes: file_proto_node_agent_proto_depIdxs,
+		MessageInfos:      file_proto_node_agent_proto_msgTypes,
 	}.Build()
-	File_node_agent_proto = out.File
-	file_node_agent_proto_goTypes = nil
-	file_node_agent_proto_depIdxs = nil
+	File_proto_node_agent_proto = out.File
+	file_proto_node_agent_proto_goTypes = nil
+	file_proto_node_agent_proto_depIdxs = nil
 }

@@ -28,6 +28,18 @@ service MetadataService {
 
   // DeleteDatabaseRecord deletes the database metadata.
   rpc DeleteDatabaseRecord(DeleteDatabaseRecordRequest) returns (DeleteDatabaseRecordResponse);
+
+  // UpdateNodeStatus updates the status field of a node (e.g. 'draining', 'drained', 'healthy').
+  rpc UpdateNodeStatus(UpdateNodeStatusRequest) returns (UpdateNodeStatusResponse);
+}
+
+message UpdateNodeStatusRequest {
+  string node_id = 1;
+  string status = 2;
+}
+
+message UpdateNodeStatusResponse {
+  bool success = 1;
 }
 
 message RegisterNodeRequest {

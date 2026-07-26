@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v4.25.1
-// source: metadata_service.proto
+// source: proto/metadata_service.proto
 
 package metadata
 
@@ -21,6 +21,102 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type UpdateNodeStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateNodeStatusRequest) Reset() {
+	*x = UpdateNodeStatusRequest{}
+	mi := &file_proto_metadata_service_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateNodeStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateNodeStatusRequest) ProtoMessage() {}
+
+func (x *UpdateNodeStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateNodeStatusRequest.ProtoReflect.Descriptor instead.
+func (*UpdateNodeStatusRequest) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *UpdateNodeStatusRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *UpdateNodeStatusRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type UpdateNodeStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateNodeStatusResponse) Reset() {
+	*x = UpdateNodeStatusResponse{}
+	mi := &file_proto_metadata_service_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateNodeStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateNodeStatusResponse) ProtoMessage() {}
+
+func (x *UpdateNodeStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateNodeStatusResponse.ProtoReflect.Descriptor instead.
+func (*UpdateNodeStatusResponse) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *UpdateNodeStatusResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 type RegisterNodeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ClusterId     string                 `protobuf:"bytes,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
@@ -31,7 +127,7 @@ type RegisterNodeRequest struct {
 
 func (x *RegisterNodeRequest) Reset() {
 	*x = RegisterNodeRequest{}
-	mi := &file_metadata_service_proto_msgTypes[0]
+	mi := &file_proto_metadata_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +139,7 @@ func (x *RegisterNodeRequest) String() string {
 func (*RegisterNodeRequest) ProtoMessage() {}
 
 func (x *RegisterNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_service_proto_msgTypes[0]
+	mi := &file_proto_metadata_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +152,7 @@ func (x *RegisterNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterNodeRequest.ProtoReflect.Descriptor instead.
 func (*RegisterNodeRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_service_proto_rawDescGZIP(), []int{0}
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RegisterNodeRequest) GetClusterId() string {
@@ -83,7 +179,7 @@ type RegisterNodeResponse struct {
 
 func (x *RegisterNodeResponse) Reset() {
 	*x = RegisterNodeResponse{}
-	mi := &file_metadata_service_proto_msgTypes[1]
+	mi := &file_proto_metadata_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -95,7 +191,7 @@ func (x *RegisterNodeResponse) String() string {
 func (*RegisterNodeResponse) ProtoMessage() {}
 
 func (x *RegisterNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_service_proto_msgTypes[1]
+	mi := &file_proto_metadata_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -108,7 +204,7 @@ func (x *RegisterNodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterNodeResponse.ProtoReflect.Descriptor instead.
 func (*RegisterNodeResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_service_proto_rawDescGZIP(), []int{1}
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RegisterNodeResponse) GetNodeId() string {
@@ -138,7 +234,7 @@ type SendHeartbeatRequest struct {
 
 func (x *SendHeartbeatRequest) Reset() {
 	*x = SendHeartbeatRequest{}
-	mi := &file_metadata_service_proto_msgTypes[2]
+	mi := &file_proto_metadata_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -150,7 +246,7 @@ func (x *SendHeartbeatRequest) String() string {
 func (*SendHeartbeatRequest) ProtoMessage() {}
 
 func (x *SendHeartbeatRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_service_proto_msgTypes[2]
+	mi := &file_proto_metadata_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -163,7 +259,7 @@ func (x *SendHeartbeatRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendHeartbeatRequest.ProtoReflect.Descriptor instead.
 func (*SendHeartbeatRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_service_proto_rawDescGZIP(), []int{2}
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SendHeartbeatRequest) GetNodeId() string {
@@ -210,7 +306,7 @@ type SendHeartbeatResponse struct {
 
 func (x *SendHeartbeatResponse) Reset() {
 	*x = SendHeartbeatResponse{}
-	mi := &file_metadata_service_proto_msgTypes[3]
+	mi := &file_proto_metadata_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -222,7 +318,7 @@ func (x *SendHeartbeatResponse) String() string {
 func (*SendHeartbeatResponse) ProtoMessage() {}
 
 func (x *SendHeartbeatResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_service_proto_msgTypes[3]
+	mi := &file_proto_metadata_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -235,7 +331,7 @@ func (x *SendHeartbeatResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendHeartbeatResponse.ProtoReflect.Descriptor instead.
 func (*SendHeartbeatResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_service_proto_rawDescGZIP(), []int{3}
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SendHeartbeatResponse) GetSuccess() bool {
@@ -254,7 +350,7 @@ type GetNodesRequest struct {
 
 func (x *GetNodesRequest) Reset() {
 	*x = GetNodesRequest{}
-	mi := &file_metadata_service_proto_msgTypes[4]
+	mi := &file_proto_metadata_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -266,7 +362,7 @@ func (x *GetNodesRequest) String() string {
 func (*GetNodesRequest) ProtoMessage() {}
 
 func (x *GetNodesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_service_proto_msgTypes[4]
+	mi := &file_proto_metadata_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -279,7 +375,7 @@ func (x *GetNodesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNodesRequest.ProtoReflect.Descriptor instead.
 func (*GetNodesRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_service_proto_rawDescGZIP(), []int{4}
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetNodesRequest) GetClusterId() string {
@@ -306,7 +402,7 @@ type NodeInfo struct {
 
 func (x *NodeInfo) Reset() {
 	*x = NodeInfo{}
-	mi := &file_metadata_service_proto_msgTypes[5]
+	mi := &file_proto_metadata_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -318,7 +414,7 @@ func (x *NodeInfo) String() string {
 func (*NodeInfo) ProtoMessage() {}
 
 func (x *NodeInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_service_proto_msgTypes[5]
+	mi := &file_proto_metadata_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -331,7 +427,7 @@ func (x *NodeInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeInfo.ProtoReflect.Descriptor instead.
 func (*NodeInfo) Descriptor() ([]byte, []int) {
-	return file_metadata_service_proto_rawDescGZIP(), []int{5}
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *NodeInfo) GetId() string {
@@ -406,7 +502,7 @@ type GetNodesResponse struct {
 
 func (x *GetNodesResponse) Reset() {
 	*x = GetNodesResponse{}
-	mi := &file_metadata_service_proto_msgTypes[6]
+	mi := &file_proto_metadata_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -418,7 +514,7 @@ func (x *GetNodesResponse) String() string {
 func (*GetNodesResponse) ProtoMessage() {}
 
 func (x *GetNodesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_service_proto_msgTypes[6]
+	mi := &file_proto_metadata_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -431,7 +527,7 @@ func (x *GetNodesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNodesResponse.ProtoReflect.Descriptor instead.
 func (*GetNodesResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_service_proto_rawDescGZIP(), []int{6}
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetNodesResponse) GetNodes() []*NodeInfo {
@@ -450,7 +546,7 @@ type ScheduleRequest struct {
 
 func (x *ScheduleRequest) Reset() {
 	*x = ScheduleRequest{}
-	mi := &file_metadata_service_proto_msgTypes[7]
+	mi := &file_proto_metadata_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -462,7 +558,7 @@ func (x *ScheduleRequest) String() string {
 func (*ScheduleRequest) ProtoMessage() {}
 
 func (x *ScheduleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_service_proto_msgTypes[7]
+	mi := &file_proto_metadata_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -475,7 +571,7 @@ func (x *ScheduleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScheduleRequest.ProtoReflect.Descriptor instead.
 func (*ScheduleRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_service_proto_rawDescGZIP(), []int{7}
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ScheduleRequest) GetClusterId() string {
@@ -496,7 +592,7 @@ type ScheduleResponse struct {
 
 func (x *ScheduleResponse) Reset() {
 	*x = ScheduleResponse{}
-	mi := &file_metadata_service_proto_msgTypes[8]
+	mi := &file_proto_metadata_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -508,7 +604,7 @@ func (x *ScheduleResponse) String() string {
 func (*ScheduleResponse) ProtoMessage() {}
 
 func (x *ScheduleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_service_proto_msgTypes[8]
+	mi := &file_proto_metadata_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -521,7 +617,7 @@ func (x *ScheduleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScheduleResponse.ProtoReflect.Descriptor instead.
 func (*ScheduleResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_service_proto_rawDescGZIP(), []int{8}
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ScheduleResponse) GetNodeId() string {
@@ -545,11 +641,628 @@ func (x *ScheduleResponse) GetScoreBreakdown() map[string]float32 {
 	return nil
 }
 
-var File_metadata_service_proto protoreflect.FileDescriptor
+type CreateDatabaseRecordRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	ClusterId     string                 `protobuf:"bytes,2,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	NodeId        string                 `protobuf:"bytes,3,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
+	Attempts      int32                  `protobuf:"varint,5,opt,name=attempts,proto3" json:"attempts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
 
-const file_metadata_service_proto_rawDesc = "" +
+func (x *CreateDatabaseRecordRequest) Reset() {
+	*x = CreateDatabaseRecordRequest{}
+	mi := &file_proto_metadata_service_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateDatabaseRecordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateDatabaseRecordRequest) ProtoMessage() {}
+
+func (x *CreateDatabaseRecordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateDatabaseRecordRequest.ProtoReflect.Descriptor instead.
+func (*CreateDatabaseRecordRequest) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CreateDatabaseRecordRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateDatabaseRecordRequest) GetClusterId() string {
+	if x != nil {
+		return x.ClusterId
+	}
+	return ""
+}
+
+func (x *CreateDatabaseRecordRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *CreateDatabaseRecordRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *CreateDatabaseRecordRequest) GetAttempts() int32 {
+	if x != nil {
+		return x.Attempts
+	}
+	return 0
+}
+
+type CreateDatabaseRecordResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DatabaseId    string                 `protobuf:"bytes,1,opt,name=database_id,json=databaseId,proto3" json:"database_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateDatabaseRecordResponse) Reset() {
+	*x = CreateDatabaseRecordResponse{}
+	mi := &file_proto_metadata_service_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateDatabaseRecordResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateDatabaseRecordResponse) ProtoMessage() {}
+
+func (x *CreateDatabaseRecordResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateDatabaseRecordResponse.ProtoReflect.Descriptor instead.
+func (*CreateDatabaseRecordResponse) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *CreateDatabaseRecordResponse) GetDatabaseId() string {
+	if x != nil {
+		return x.DatabaseId
+	}
+	return ""
+}
+
+type UpdateDatabaseStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DatabaseId    string                 `protobuf:"bytes,1,opt,name=database_id,json=databaseId,proto3" json:"database_id,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	NodeId        string                 `protobuf:"bytes,3,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Endpoint      string                 `protobuf:"bytes,4,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	Attempts      int32                  `protobuf:"varint,5,opt,name=attempts,proto3" json:"attempts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDatabaseStatusRequest) Reset() {
+	*x = UpdateDatabaseStatusRequest{}
+	mi := &file_proto_metadata_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDatabaseStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDatabaseStatusRequest) ProtoMessage() {}
+
+func (x *UpdateDatabaseStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDatabaseStatusRequest.ProtoReflect.Descriptor instead.
+func (*UpdateDatabaseStatusRequest) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *UpdateDatabaseStatusRequest) GetDatabaseId() string {
+	if x != nil {
+		return x.DatabaseId
+	}
+	return ""
+}
+
+func (x *UpdateDatabaseStatusRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *UpdateDatabaseStatusRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *UpdateDatabaseStatusRequest) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *UpdateDatabaseStatusRequest) GetAttempts() int32 {
+	if x != nil {
+		return x.Attempts
+	}
+	return 0
+}
+
+type UpdateDatabaseStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDatabaseStatusResponse) Reset() {
+	*x = UpdateDatabaseStatusResponse{}
+	mi := &file_proto_metadata_service_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDatabaseStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDatabaseStatusResponse) ProtoMessage() {}
+
+func (x *UpdateDatabaseStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDatabaseStatusResponse.ProtoReflect.Descriptor instead.
+func (*UpdateDatabaseStatusResponse) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *UpdateDatabaseStatusResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type GetDatabaseRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DatabaseId    string                 `protobuf:"bytes,1,opt,name=database_id,json=databaseId,proto3" json:"database_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDatabaseRequest) Reset() {
+	*x = GetDatabaseRequest{}
+	mi := &file_proto_metadata_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDatabaseRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDatabaseRequest) ProtoMessage() {}
+
+func (x *GetDatabaseRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDatabaseRequest.ProtoReflect.Descriptor instead.
+func (*GetDatabaseRequest) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *GetDatabaseRequest) GetDatabaseId() string {
+	if x != nil {
+		return x.DatabaseId
+	}
+	return ""
+}
+
+type DatabaseInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	ClusterId     string                 `protobuf:"bytes,3,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	NodeId        string                 `protobuf:"bytes,4,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	Endpoint      string                 `protobuf:"bytes,6,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	Attempts      int32                  `protobuf:"varint,7,opt,name=attempts,proto3" json:"attempts,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     string                 `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DatabaseInfo) Reset() {
+	*x = DatabaseInfo{}
+	mi := &file_proto_metadata_service_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DatabaseInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DatabaseInfo) ProtoMessage() {}
+
+func (x *DatabaseInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DatabaseInfo.ProtoReflect.Descriptor instead.
+func (*DatabaseInfo) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *DatabaseInfo) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *DatabaseInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *DatabaseInfo) GetClusterId() string {
+	if x != nil {
+		return x.ClusterId
+	}
+	return ""
+}
+
+func (x *DatabaseInfo) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *DatabaseInfo) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *DatabaseInfo) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *DatabaseInfo) GetAttempts() int32 {
+	if x != nil {
+		return x.Attempts
+	}
+	return 0
+}
+
+func (x *DatabaseInfo) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *DatabaseInfo) GetUpdatedAt() string {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return ""
+}
+
+type GetDatabaseResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Database      *DatabaseInfo          `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDatabaseResponse) Reset() {
+	*x = GetDatabaseResponse{}
+	mi := &file_proto_metadata_service_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDatabaseResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDatabaseResponse) ProtoMessage() {}
+
+func (x *GetDatabaseResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDatabaseResponse.ProtoReflect.Descriptor instead.
+func (*GetDatabaseResponse) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetDatabaseResponse) GetDatabase() *DatabaseInfo {
+	if x != nil {
+		return x.Database
+	}
+	return nil
+}
+
+type ListDatabasesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClusterId     string                 `protobuf:"bytes,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDatabasesRequest) Reset() {
+	*x = ListDatabasesRequest{}
+	mi := &file_proto_metadata_service_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDatabasesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDatabasesRequest) ProtoMessage() {}
+
+func (x *ListDatabasesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDatabasesRequest.ProtoReflect.Descriptor instead.
+func (*ListDatabasesRequest) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ListDatabasesRequest) GetClusterId() string {
+	if x != nil {
+		return x.ClusterId
+	}
+	return ""
+}
+
+type ListDatabasesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Databases     []*DatabaseInfo        `protobuf:"bytes,1,rep,name=databases,proto3" json:"databases,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDatabasesResponse) Reset() {
+	*x = ListDatabasesResponse{}
+	mi := &file_proto_metadata_service_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDatabasesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDatabasesResponse) ProtoMessage() {}
+
+func (x *ListDatabasesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDatabasesResponse.ProtoReflect.Descriptor instead.
+func (*ListDatabasesResponse) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ListDatabasesResponse) GetDatabases() []*DatabaseInfo {
+	if x != nil {
+		return x.Databases
+	}
+	return nil
+}
+
+type DeleteDatabaseRecordRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DatabaseId    string                 `protobuf:"bytes,1,opt,name=database_id,json=databaseId,proto3" json:"database_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDatabaseRecordRequest) Reset() {
+	*x = DeleteDatabaseRecordRequest{}
+	mi := &file_proto_metadata_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDatabaseRecordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDatabaseRecordRequest) ProtoMessage() {}
+
+func (x *DeleteDatabaseRecordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDatabaseRecordRequest.ProtoReflect.Descriptor instead.
+func (*DeleteDatabaseRecordRequest) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *DeleteDatabaseRecordRequest) GetDatabaseId() string {
+	if x != nil {
+		return x.DatabaseId
+	}
+	return ""
+}
+
+type DeleteDatabaseRecordResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDatabaseRecordResponse) Reset() {
+	*x = DeleteDatabaseRecordResponse{}
+	mi := &file_proto_metadata_service_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDatabaseRecordResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDatabaseRecordResponse) ProtoMessage() {}
+
+func (x *DeleteDatabaseRecordResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_metadata_service_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDatabaseRecordResponse.ProtoReflect.Descriptor instead.
+func (*DeleteDatabaseRecordResponse) Descriptor() ([]byte, []int) {
+	return file_proto_metadata_service_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *DeleteDatabaseRecordResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+var File_proto_metadata_service_proto protoreflect.FileDescriptor
+
+const file_proto_metadata_service_proto_rawDesc = "" +
 	"\n" +
-	"\x16metadata_service.proto\x12\bmetadata\"P\n" +
+	"\x1cproto/metadata_service.proto\x12\bmetadata\"J\n" +
+	"\x17UpdateNodeStatusRequest\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\"4\n" +
+	"\x18UpdateNodeStatusResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"P\n" +
 	"\x13RegisterNodeRequest\x12\x1d\n" +
 	"\n" +
 	"cluster_id\x18\x01 \x01(\tR\tclusterId\x12\x1a\n" +
@@ -592,77 +1305,157 @@ const file_metadata_service_proto_rawDesc = "" +
 	"\x0fscore_breakdown\x18\x03 \x03(\v2..metadata.ScheduleResponse.ScoreBreakdownEntryR\x0escoreBreakdown\x1aA\n" +
 	"\x13ScoreBreakdownEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x02R\x05value:\x028\x012\xf5\x01\n" +
+	"\x05value\x18\x02 \x01(\x02R\x05value:\x028\x01\"\x9d\x01\n" +
+	"\x1bCreateDatabaseRecordRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1d\n" +
+	"\n" +
+	"cluster_id\x18\x02 \x01(\tR\tclusterId\x12\x17\n" +
+	"\anode_id\x18\x03 \x01(\tR\x06nodeId\x12\x16\n" +
+	"\x06status\x18\x04 \x01(\tR\x06status\x12\x1a\n" +
+	"\battempts\x18\x05 \x01(\x05R\battempts\"?\n" +
+	"\x1cCreateDatabaseRecordResponse\x12\x1f\n" +
+	"\vdatabase_id\x18\x01 \x01(\tR\n" +
+	"databaseId\"\xa7\x01\n" +
+	"\x1bUpdateDatabaseStatusRequest\x12\x1f\n" +
+	"\vdatabase_id\x18\x01 \x01(\tR\n" +
+	"databaseId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12\x17\n" +
+	"\anode_id\x18\x03 \x01(\tR\x06nodeId\x12\x1a\n" +
+	"\bendpoint\x18\x04 \x01(\tR\bendpoint\x12\x1a\n" +
+	"\battempts\x18\x05 \x01(\x05R\battempts\"8\n" +
+	"\x1cUpdateDatabaseStatusResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"5\n" +
+	"\x12GetDatabaseRequest\x12\x1f\n" +
+	"\vdatabase_id\x18\x01 \x01(\tR\n" +
+	"databaseId\"\xf8\x01\n" +
+	"\fDatabaseInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
+	"\n" +
+	"cluster_id\x18\x03 \x01(\tR\tclusterId\x12\x17\n" +
+	"\anode_id\x18\x04 \x01(\tR\x06nodeId\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x12\x1a\n" +
+	"\bendpoint\x18\x06 \x01(\tR\bendpoint\x12\x1a\n" +
+	"\battempts\x18\a \x01(\x05R\battempts\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\b \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\t \x01(\tR\tupdatedAt\"I\n" +
+	"\x13GetDatabaseResponse\x122\n" +
+	"\bdatabase\x18\x01 \x01(\v2\x16.metadata.DatabaseInfoR\bdatabase\"5\n" +
+	"\x14ListDatabasesRequest\x12\x1d\n" +
+	"\n" +
+	"cluster_id\x18\x01 \x01(\tR\tclusterId\"M\n" +
+	"\x15ListDatabasesResponse\x124\n" +
+	"\tdatabases\x18\x01 \x03(\v2\x16.metadata.DatabaseInfoR\tdatabases\">\n" +
+	"\x1bDeleteDatabaseRecordRequest\x12\x1f\n" +
+	"\vdatabase_id\x18\x01 \x01(\tR\n" +
+	"databaseId\"8\n" +
+	"\x1cDeleteDatabaseRecordResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xa3\x06\n" +
 	"\x0fMetadataService\x12M\n" +
 	"\fRegisterNode\x12\x1d.metadata.RegisterNodeRequest\x1a\x1e.metadata.RegisterNodeResponse\x12P\n" +
 	"\rSendHeartbeat\x12\x1e.metadata.SendHeartbeatRequest\x1a\x1f.metadata.SendHeartbeatResponse\x12A\n" +
-	"\bGetNodes\x12\x19.metadata.GetNodesRequest\x1a\x1a.metadata.GetNodesResponse2U\n" +
+	"\bGetNodes\x12\x19.metadata.GetNodesRequest\x1a\x1a.metadata.GetNodesResponse\x12e\n" +
+	"\x14CreateDatabaseRecord\x12%.metadata.CreateDatabaseRecordRequest\x1a&.metadata.CreateDatabaseRecordResponse\x12e\n" +
+	"\x14UpdateDatabaseStatus\x12%.metadata.UpdateDatabaseStatusRequest\x1a&.metadata.UpdateDatabaseStatusResponse\x12J\n" +
+	"\vGetDatabase\x12\x1c.metadata.GetDatabaseRequest\x1a\x1d.metadata.GetDatabaseResponse\x12P\n" +
+	"\rListDatabases\x12\x1e.metadata.ListDatabasesRequest\x1a\x1f.metadata.ListDatabasesResponse\x12e\n" +
+	"\x14DeleteDatabaseRecord\x12%.metadata.DeleteDatabaseRecordRequest\x1a&.metadata.DeleteDatabaseRecordResponse\x12Y\n" +
+	"\x10UpdateNodeStatus\x12!.metadata.UpdateNodeStatusRequest\x1a\".metadata.UpdateNodeStatusResponse2U\n" +
 	"\x10SchedulerService\x12A\n" +
 	"\bSchedule\x12\x19.metadata.ScheduleRequest\x1a\x1a.metadata.ScheduleResponseBHZFgithub.com/onlyarnav/nimbusdb/services/metadata-service/proto;metadatab\x06proto3"
 
 var (
-	file_metadata_service_proto_rawDescOnce sync.Once
-	file_metadata_service_proto_rawDescData []byte
+	file_proto_metadata_service_proto_rawDescOnce sync.Once
+	file_proto_metadata_service_proto_rawDescData []byte
 )
 
-func file_metadata_service_proto_rawDescGZIP() []byte {
-	file_metadata_service_proto_rawDescOnce.Do(func() {
-		file_metadata_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_metadata_service_proto_rawDesc), len(file_metadata_service_proto_rawDesc)))
+func file_proto_metadata_service_proto_rawDescGZIP() []byte {
+	file_proto_metadata_service_proto_rawDescOnce.Do(func() {
+		file_proto_metadata_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_metadata_service_proto_rawDesc), len(file_proto_metadata_service_proto_rawDesc)))
 	})
-	return file_metadata_service_proto_rawDescData
+	return file_proto_metadata_service_proto_rawDescData
 }
 
-var file_metadata_service_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
-var file_metadata_service_proto_goTypes = []any{
-	(*RegisterNodeRequest)(nil),   // 0: metadata.RegisterNodeRequest
-	(*RegisterNodeResponse)(nil),  // 1: metadata.RegisterNodeResponse
-	(*SendHeartbeatRequest)(nil),  // 2: metadata.SendHeartbeatRequest
-	(*SendHeartbeatResponse)(nil), // 3: metadata.SendHeartbeatResponse
-	(*GetNodesRequest)(nil),       // 4: metadata.GetNodesRequest
-	(*NodeInfo)(nil),              // 5: metadata.NodeInfo
-	(*GetNodesResponse)(nil),      // 6: metadata.GetNodesResponse
-	(*ScheduleRequest)(nil),       // 7: metadata.ScheduleRequest
-	(*ScheduleResponse)(nil),      // 8: metadata.ScheduleResponse
-	nil,                           // 9: metadata.ScheduleResponse.ScoreBreakdownEntry
+var file_proto_metadata_service_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_proto_metadata_service_proto_goTypes = []any{
+	(*UpdateNodeStatusRequest)(nil),      // 0: metadata.UpdateNodeStatusRequest
+	(*UpdateNodeStatusResponse)(nil),     // 1: metadata.UpdateNodeStatusResponse
+	(*RegisterNodeRequest)(nil),          // 2: metadata.RegisterNodeRequest
+	(*RegisterNodeResponse)(nil),         // 3: metadata.RegisterNodeResponse
+	(*SendHeartbeatRequest)(nil),         // 4: metadata.SendHeartbeatRequest
+	(*SendHeartbeatResponse)(nil),        // 5: metadata.SendHeartbeatResponse
+	(*GetNodesRequest)(nil),              // 6: metadata.GetNodesRequest
+	(*NodeInfo)(nil),                     // 7: metadata.NodeInfo
+	(*GetNodesResponse)(nil),             // 8: metadata.GetNodesResponse
+	(*ScheduleRequest)(nil),              // 9: metadata.ScheduleRequest
+	(*ScheduleResponse)(nil),             // 10: metadata.ScheduleResponse
+	(*CreateDatabaseRecordRequest)(nil),  // 11: metadata.CreateDatabaseRecordRequest
+	(*CreateDatabaseRecordResponse)(nil), // 12: metadata.CreateDatabaseRecordResponse
+	(*UpdateDatabaseStatusRequest)(nil),  // 13: metadata.UpdateDatabaseStatusRequest
+	(*UpdateDatabaseStatusResponse)(nil), // 14: metadata.UpdateDatabaseStatusResponse
+	(*GetDatabaseRequest)(nil),           // 15: metadata.GetDatabaseRequest
+	(*DatabaseInfo)(nil),                 // 16: metadata.DatabaseInfo
+	(*GetDatabaseResponse)(nil),          // 17: metadata.GetDatabaseResponse
+	(*ListDatabasesRequest)(nil),         // 18: metadata.ListDatabasesRequest
+	(*ListDatabasesResponse)(nil),        // 19: metadata.ListDatabasesResponse
+	(*DeleteDatabaseRecordRequest)(nil),  // 20: metadata.DeleteDatabaseRecordRequest
+	(*DeleteDatabaseRecordResponse)(nil), // 21: metadata.DeleteDatabaseRecordResponse
+	nil,                                  // 22: metadata.ScheduleResponse.ScoreBreakdownEntry
 }
-var file_metadata_service_proto_depIdxs = []int32{
-	5, // 0: metadata.GetNodesResponse.nodes:type_name -> metadata.NodeInfo
-	9, // 1: metadata.ScheduleResponse.score_breakdown:type_name -> metadata.ScheduleResponse.ScoreBreakdownEntry
-	0, // 2: metadata.MetadataService.RegisterNode:input_type -> metadata.RegisterNodeRequest
-	2, // 3: metadata.MetadataService.SendHeartbeat:input_type -> metadata.SendHeartbeatRequest
-	4, // 4: metadata.MetadataService.GetNodes:input_type -> metadata.GetNodesRequest
-	7, // 5: metadata.SchedulerService.Schedule:input_type -> metadata.ScheduleRequest
-	1, // 6: metadata.MetadataService.RegisterNode:output_type -> metadata.RegisterNodeResponse
-	3, // 7: metadata.MetadataService.SendHeartbeat:output_type -> metadata.SendHeartbeatResponse
-	6, // 8: metadata.MetadataService.GetNodes:output_type -> metadata.GetNodesResponse
-	8, // 9: metadata.SchedulerService.Schedule:output_type -> metadata.ScheduleResponse
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+var file_proto_metadata_service_proto_depIdxs = []int32{
+	7,  // 0: metadata.GetNodesResponse.nodes:type_name -> metadata.NodeInfo
+	22, // 1: metadata.ScheduleResponse.score_breakdown:type_name -> metadata.ScheduleResponse.ScoreBreakdownEntry
+	16, // 2: metadata.GetDatabaseResponse.database:type_name -> metadata.DatabaseInfo
+	16, // 3: metadata.ListDatabasesResponse.databases:type_name -> metadata.DatabaseInfo
+	2,  // 4: metadata.MetadataService.RegisterNode:input_type -> metadata.RegisterNodeRequest
+	4,  // 5: metadata.MetadataService.SendHeartbeat:input_type -> metadata.SendHeartbeatRequest
+	6,  // 6: metadata.MetadataService.GetNodes:input_type -> metadata.GetNodesRequest
+	11, // 7: metadata.MetadataService.CreateDatabaseRecord:input_type -> metadata.CreateDatabaseRecordRequest
+	13, // 8: metadata.MetadataService.UpdateDatabaseStatus:input_type -> metadata.UpdateDatabaseStatusRequest
+	15, // 9: metadata.MetadataService.GetDatabase:input_type -> metadata.GetDatabaseRequest
+	18, // 10: metadata.MetadataService.ListDatabases:input_type -> metadata.ListDatabasesRequest
+	20, // 11: metadata.MetadataService.DeleteDatabaseRecord:input_type -> metadata.DeleteDatabaseRecordRequest
+	0,  // 12: metadata.MetadataService.UpdateNodeStatus:input_type -> metadata.UpdateNodeStatusRequest
+	9,  // 13: metadata.SchedulerService.Schedule:input_type -> metadata.ScheduleRequest
+	3,  // 14: metadata.MetadataService.RegisterNode:output_type -> metadata.RegisterNodeResponse
+	5,  // 15: metadata.MetadataService.SendHeartbeat:output_type -> metadata.SendHeartbeatResponse
+	8,  // 16: metadata.MetadataService.GetNodes:output_type -> metadata.GetNodesResponse
+	12, // 17: metadata.MetadataService.CreateDatabaseRecord:output_type -> metadata.CreateDatabaseRecordResponse
+	14, // 18: metadata.MetadataService.UpdateDatabaseStatus:output_type -> metadata.UpdateDatabaseStatusResponse
+	17, // 19: metadata.MetadataService.GetDatabase:output_type -> metadata.GetDatabaseResponse
+	19, // 20: metadata.MetadataService.ListDatabases:output_type -> metadata.ListDatabasesResponse
+	21, // 21: metadata.MetadataService.DeleteDatabaseRecord:output_type -> metadata.DeleteDatabaseRecordResponse
+	1,  // 22: metadata.MetadataService.UpdateNodeStatus:output_type -> metadata.UpdateNodeStatusResponse
+	10, // 23: metadata.SchedulerService.Schedule:output_type -> metadata.ScheduleResponse
+	14, // [14:24] is the sub-list for method output_type
+	4,  // [4:14] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
-func init() { file_metadata_service_proto_init() }
-func file_metadata_service_proto_init() {
-	if File_metadata_service_proto != nil {
+func init() { file_proto_metadata_service_proto_init() }
+func file_proto_metadata_service_proto_init() {
+	if File_proto_metadata_service_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metadata_service_proto_rawDesc), len(file_metadata_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_metadata_service_proto_rawDesc), len(file_proto_metadata_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_metadata_service_proto_goTypes,
-		DependencyIndexes: file_metadata_service_proto_depIdxs,
-		MessageInfos:      file_metadata_service_proto_msgTypes,
+		GoTypes:           file_proto_metadata_service_proto_goTypes,
+		DependencyIndexes: file_proto_metadata_service_proto_depIdxs,
+		MessageInfos:      file_proto_metadata_service_proto_msgTypes,
 	}.Build()
-	File_metadata_service_proto = out.File
-	file_metadata_service_proto_goTypes = nil
-	file_metadata_service_proto_depIdxs = nil
+	File_proto_metadata_service_proto = out.File
+	file_proto_metadata_service_proto_goTypes = nil
+	file_proto_metadata_service_proto_depIdxs = nil
 }
