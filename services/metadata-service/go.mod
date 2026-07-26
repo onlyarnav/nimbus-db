@@ -10,6 +10,8 @@ require (
 	google.golang.org/protobuf v1.36.11
 )
 
+replace github.com/onlyarnav/nimbusdb/services/auth-service => ../auth-service
+
 replace github.com/onlyarnav/nimbusdb/services/observability => ../observability
 
 require (

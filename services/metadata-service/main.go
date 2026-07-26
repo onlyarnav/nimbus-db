@@ -15,6 +15,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/metadata-service/config"
 	"github.com/onlyarnav/nimbusdb/services/metadata-service/db"
 	grpcserver "github.com/onlyarnav/nimbusdb/services/metadata-service/grpc"
@@ -66,9 +67,8 @@ func main() {
 	// Register HTTP routes
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handlers.HealthHandler(pool))
-	mux.HandleFunc("/v1/nodes", handlers.NodesHandler(pool))
+	mux.Handle("/v1/nodes", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(handlers.NodesHandler(pool)))
 	mux.Handle("/metrics", telemetry.MetricsHandler())
-
 
 	// Setup HTTP server with robust timeouts
 	serverAddr := fmt.Sprintf(":%s", cfg.Port)
@@ -87,7 +87,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	gSrv := grpc.NewServer()
+	metaRoleMap := map[string]string{
+		"/proto.MetadataService/RegisterNode":         auth.RoleOperator,
+		"/proto.MetadataService/SendHeartbeat":        auth.RoleOperator,
+		"/proto.MetadataService/GetNodes":             auth.RoleReadOnly,
+		"/proto.MetadataService/CreateDatabaseRecord": auth.RoleOperator,
+		"/proto.MetadataService/UpdateDatabaseStatus": auth.RoleOperator,
+		"/proto.MetadataService/GetDatabase":          auth.RoleReadOnly,
+		"/proto.MetadataService/ListDatabases":        auth.RoleReadOnly,
+		"/proto.MetadataService/DeleteDatabaseRecord": auth.RoleOperator,
+		"/proto.MetadataService/UpdateNodeStatus":     auth.RoleAdmin,
+	}
+
+	gSrv := grpc.NewServer(grpc.UnaryInterceptor(auth.UnaryServerInterceptor(metaRoleMap)))
 	pb.RegisterMetadataServiceServer(gSrv, grpcserver.NewServer(pool))
 
 	// Channel to listen for errors during server startup
