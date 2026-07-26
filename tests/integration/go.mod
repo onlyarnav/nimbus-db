@@ -4,9 +4,13 @@ go 1.25.0
 
 require (
 	github.com/onlyarnav/nimbusdb/services/control-plane v0.0.0
+	github.com/onlyarnav/nimbusdb/services/deployment-controller v0.0.0-00010101000000-000000000000
 	github.com/onlyarnav/nimbusdb/services/gateway v0.0.0
 	github.com/onlyarnav/nimbusdb/services/metadata-service v0.0.0
 	github.com/onlyarnav/nimbusdb/services/observability v0.0.0
+	github.com/onlyarnav/nimbusdb/services/scheduler v0.0.0-00010101000000-000000000000
+	github.com/onlyarnav/nimbusdb/services/sla-monitor v0.0.0-00010101000000-000000000000
+	github.com/onlyarnav/nimbusdb/services/worker-node v0.0.0
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/sdk v1.43.0
 	google.golang.org/grpc v1.82.0
@@ -20,6 +24,16 @@ replace github.com/onlyarnav/nimbusdb/services/gateway => ../../services/gateway
 replace github.com/onlyarnav/nimbusdb/services/control-plane => ../../services/control-plane
 
 replace github.com/onlyarnav/nimbusdb/services/observability => ../../services/observability
+
+replace github.com/onlyarnav/nimbusdb/services/deployment-controller => ../../services/deployment-controller
+
+replace github.com/onlyarnav/nimbusdb/services/capacity-planner => ../../services/capacity-planner
+
+replace github.com/onlyarnav/nimbusdb/services/sla-monitor => ../../services/sla-monitor
+
+replace github.com/onlyarnav/nimbusdb/services/scheduler => ../../services/scheduler
+
+replace github.com/onlyarnav/nimbusdb/services/worker-node => ../../services/worker-node
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
