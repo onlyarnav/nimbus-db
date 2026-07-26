@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/gateway/router"
-	"github.com/onlyarnav/nimbusdb/services/metadata-service/region"
 	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
+	"github.com/onlyarnav/nimbusdb/services/metadata-service/region"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 )
 
@@ -41,18 +43,18 @@ func NewGatewayHandlers(mc pb.MetadataServiceClient) *GatewayHandlers {
 }
 
 func (g *GatewayHandlers) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /v1/databases", g.handleCreateDatabase)
-	mux.HandleFunc("GET /v1/databases/{id}", g.handleGetDatabase)
-	mux.HandleFunc("GET /v1/databases", g.handleListDatabases)
-	mux.HandleFunc("DELETE /v1/databases/{id}", g.handleDeleteDatabase)
-	mux.HandleFunc("GET /v1/regions", g.handleListRegions)
-	mux.HandleFunc("POST /v1/deployments/rolling", g.handleTriggerRollingDeployment)
-	mux.HandleFunc("POST /v1/deployments/canary", g.handleTriggerCanaryDeployment)
-	mux.HandleFunc("POST /v1/deployments/blue-green", g.handleTriggerBlueGreenDeployment)
-	mux.HandleFunc("POST /v1/deployments/rollback", g.handleTriggerRollback)
-	mux.HandleFunc("POST /v1/nodes/{id}/drain", g.handleDrainNode)
-	mux.HandleFunc("GET /v1/capacity/projection", g.handleGetCapacityProjection)
-	mux.HandleFunc("GET /v1/sla/report", g.handleGetSLAReport)
+	mux.Handle("POST /v1/databases", auth.AuthenticateAndAuthorize(auth.RoleOperator)(http.HandlerFunc(g.handleCreateDatabase)))
+	mux.Handle("GET /v1/databases/{id}", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(g.handleGetDatabase)))
+	mux.Handle("GET /v1/databases", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(g.handleListDatabases)))
+	mux.Handle("DELETE /v1/databases/{id}", auth.AuthenticateAndAuthorize(auth.RoleOperator)(http.HandlerFunc(g.handleDeleteDatabase)))
+	mux.Handle("GET /v1/regions", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(g.handleListRegions)))
+	mux.Handle("POST /v1/deployments/rolling", auth.AuthenticateAndAuthorize(auth.RoleAdmin)(http.HandlerFunc(g.handleTriggerRollingDeployment)))
+	mux.Handle("POST /v1/deployments/canary", auth.AuthenticateAndAuthorize(auth.RoleAdmin)(http.HandlerFunc(g.handleTriggerCanaryDeployment)))
+	mux.Handle("POST /v1/deployments/blue-green", auth.AuthenticateAndAuthorize(auth.RoleAdmin)(http.HandlerFunc(g.handleTriggerBlueGreenDeployment)))
+	mux.Handle("POST /v1/deployments/rollback", auth.AuthenticateAndAuthorize(auth.RoleAdmin)(http.HandlerFunc(g.handleTriggerRollback)))
+	mux.Handle("POST /v1/nodes/{id}/drain", auth.AuthenticateAndAuthorize(auth.RoleAdmin)(http.HandlerFunc(g.handleDrainNode)))
+	mux.Handle("GET /v1/capacity/projection", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(g.handleGetCapacityProjection)))
+	mux.Handle("GET /v1/sla/report", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(g.handleGetSLAReport)))
 	mux.HandleFunc("GET /health", g.handleHealth)
 	mux.Handle("GET /metrics", telemetry.MetricsHandler())
 }
