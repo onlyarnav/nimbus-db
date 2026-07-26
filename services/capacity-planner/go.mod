@@ -3,10 +3,13 @@ module github.com/onlyarnav/nimbusdb/services/capacity-planner
 go 1.25.0
 
 require (
+	github.com/onlyarnav/nimbusdb/services/auth-service v0.0.0
 	github.com/onlyarnav/nimbusdb/services/observability v0.0.0
 	google.golang.org/grpc v1.82.0
 	google.golang.org/protobuf v1.36.11
 )
+
+replace github.com/onlyarnav/nimbusdb/services/auth-service => ../auth-service
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect

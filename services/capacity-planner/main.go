@@ -13,6 +13,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/capacity-planner/planner"
 	pb "github.com/onlyarnav/nimbusdb/services/capacity-planner/proto"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
@@ -22,7 +23,7 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	slog.Info("starting nimbusdb capacity-planner service")
+	slog.Info("starting nimbusdb capacity-planner microservice")
 
 	grpcPort := os.Getenv("GRPC_PORT")
 	if grpcPort == "" {
@@ -65,7 +66,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	grpcServer := grpc.NewServer()
+	capRoleMap := map[string]string{
+		"/proto.CapacityPlannerService/PredictCapacity": auth.RoleReadOnly,
+	}
+
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(auth.UnaryServerInterceptor(capRoleMap)))
 	pb.RegisterCapacityPlannerServiceServer(grpcServer, p)
 
 	go func() {
