@@ -13,6 +13,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 	"github.com/onlyarnav/nimbusdb/services/sla-monitor/monitor"
 	pb "github.com/onlyarnav/nimbusdb/services/sla-monitor/proto"
@@ -65,7 +66,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	grpcServer := grpc.NewServer()
+	slaRoleMap := map[string]string{
+		"/proto.SLAMonitorService/RecordEvent":  auth.RoleOperator,
+		"/proto.SLAMonitorService/GetSLAReport": auth.RoleReadOnly,
+	}
+
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(auth.UnaryServerInterceptor(slaRoleMap)))
 	pb.RegisterSLAMonitorServiceServer(grpcServer, mon)
 
 	go func() {
