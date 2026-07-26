@@ -53,10 +53,10 @@ func NewHandlers(mc pb.MetadataServiceClient, orch *Orchestrator) *Handlers {
 
 // RegisterRoutes sets up all REST paths on the serve mux.
 func (h *Handlers) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /v1/databases", h.handleCreateDatabase)
-	mux.HandleFunc("GET /v1/databases/{id}", h.handleGetDatabase)
-	mux.HandleFunc("GET /v1/databases", h.handleListDatabases)
-	mux.HandleFunc("DELETE /v1/databases/{id}", h.handleDeleteDatabase)
+	mux.Handle("POST /v1/databases", auth.AuthenticateAndAuthorize(auth.RoleOperator)(http.HandlerFunc(h.handleCreateDatabase)))
+	mux.Handle("GET /v1/databases/{id}", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(h.handleGetDatabase)))
+	mux.Handle("GET /v1/databases", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(h.handleListDatabases)))
+	mux.Handle("DELETE /v1/databases/{id}", auth.AuthenticateAndAuthorize(auth.RoleOperator)(http.HandlerFunc(h.handleDeleteDatabase)))
 	mux.HandleFunc("GET /health", h.handleHealth)
 	mux.Handle("GET /metrics", telemetry.MetricsHandler())
 }
