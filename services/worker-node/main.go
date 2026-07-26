@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 	"github.com/onlyarnav/nimbusdb/services/worker-node/agent"
 	"github.com/onlyarnav/nimbusdb/services/worker-node/config"
@@ -137,7 +138,18 @@ func main() {
 		slog.Error("failed to listen for NodeAgent gRPC", "error", err)
 		os.Exit(1)
 	}
-	grpcAgentServer := grpc.NewServer()
+
+	nodeRoleMap := map[string]string{
+		"/proto.NodeAgent/CreateDatabase":  auth.RoleOperator,
+		"/proto.NodeAgent/DeleteDatabase":  auth.RoleOperator,
+		"/proto.NodeAgent/BackupDatabase":  auth.RoleOperator,
+		"/proto.NodeAgent/RestoreDatabase": auth.RoleOperator,
+		"/proto.NodeAgent/InsertVector":    auth.RoleOperator,
+		"/proto.NodeAgent/SearchVector":    auth.RoleReadOnly,
+		"/proto.NodeAgent/DrainNode":       auth.RoleAdmin,
+	}
+
+	grpcAgentServer := grpc.NewServer(grpc.UnaryInterceptor(auth.UnaryServerInterceptor(nodeRoleMap)))
 	pbAgent.RegisterNodeAgentServer(grpcAgentServer, agentServer)
 
 	go func() {
