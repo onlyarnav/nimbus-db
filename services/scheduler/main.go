@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 	"github.com/onlyarnav/nimbusdb/services/scheduler/config"
 	schedgrpc "github.com/onlyarnav/nimbusdb/services/scheduler/grpc"
@@ -62,7 +63,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	gSrv := grpc.NewServer()
+	schedRoleMap := map[string]string{
+		"/proto.SchedulerService/Schedule": auth.RoleOperator,
+	}
+
+	gSrv := grpc.NewServer(grpc.UnaryInterceptor(auth.UnaryServerInterceptor(schedRoleMap)))
 	pb.RegisterSchedulerServiceServer(gSrv, schedgrpc.NewServer(metaClient))
 
 	serverErrors := make(chan error, 1)
