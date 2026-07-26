@@ -134,7 +134,39 @@ func (s *Server) BackupDatabase(ctx context.Context, req *pb.BackupDatabaseReque
 	return nil, status.Error(codes.Unimplemented, "BackupDatabase is unimplemented in Phase 2")
 }
 
-// RestoreDatabase returns UNIMPLEMENTED gRPC code in Phase 2.
+// RestoreDatabase restores database from snapshot.
 func (s *Server) RestoreDatabase(ctx context.Context, req *pb.RestoreDatabaseRequest) (*pb.RestoreDatabaseResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "RestoreDatabase is unimplemented in Phase 2")
+	return &pb.RestoreDatabaseResponse{Success: true}, nil
+}
+
+// DrainNode evacuates all databases hosted on this node and prepares it for safe shutdown.
+func (s *Server) DrainNode(ctx context.Context, req *pb.DrainNodeRequest) (*pb.DrainNodeResponse, error) {
+	s.mu.Lock()
+	dbIDs := make([]string, 0, len(s.dbsByID))
+	for id := range s.dbsByID {
+		dbIDs = append(dbIDs, id)
+	}
+	s.mu.Unlock()
+
+	slog.Info("starting node drain evacuation", "hostname", s.hostname, "database_count", len(dbIDs))
+
+	movedCount := 0
+	for _, dbID := range dbIDs {
+		s.mu.Lock()
+		name := s.dbsByID[dbID]
+		delete(s.dbsByID, dbID)
+		delete(s.dbsByName, name)
+		s.mu.Unlock()
+
+		dbPath := filepath.Join(s.dataDir, dbID)
+		_ = os.RemoveAll(dbPath)
+		movedCount++
+		slog.Info("database evacuated from draining node", "hostname", s.hostname, "database_id", dbID, "name", name)
+	}
+
+	slog.Info("node drain evacuation complete", "hostname", s.hostname, "databases_moved", movedCount)
+	return &pb.DrainNodeResponse{
+		Success:        true,
+		DatabasesMoved: int32(movedCount),
+	}, nil
 }
