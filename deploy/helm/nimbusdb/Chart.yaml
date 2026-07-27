@@ -1,0 +1,14 @@
+apiVersion: v2
+name: nimbusdb
+description: Umbrella Helm chart for NimbusDB Distributed AI-Ready Cloud Database Platform
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - database
+  - distributed-systems
+  - vector-search
+  - cloud-operations
+maintainers:
+  - name: Arnav Purohit
+    email: a.purohit1903@gmail.com

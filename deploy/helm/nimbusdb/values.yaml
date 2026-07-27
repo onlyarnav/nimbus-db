@@ -1,0 +1,171 @@
+global:
+  environment: development
+  jwtSecret: "nimbusdb-dev-secret-key-32-bytes-long!"
+  regionMap:
+    india: "nimbus-region-india"
+    us-east: "nimbus-region-us-east"
+    us-west: "nimbus-region-us-west"
+    europe: "nimbus-region-europe"
+    japan: "nimbus-region-japan"
+
+postgres:
+  enabled: true
+  replicas: 1
+  image: "postgres:16-alpine"
+  user: "nimbus"
+  password: "nimbuspassword123"
+  database: "nimbusdb"
+  port: 5432
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  persistence:
+    enabled: true
+    size: "5Gi"
+
+authService:
+  replicas: 2
+  image: "nimbusdb/auth-service:latest"
+  port: 8087
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+metadataService:
+  replicas: 2
+  image: "nimbusdb/metadata-service:latest"
+  httpPort: 8080
+  grpcPort: 50051
+  resources:
+    requests:
+      cpu: "150m"
+      memory: "128Mi"
+    limits:
+      cpu: "300m"
+      memory: "256Mi"
+
+scheduler:
+  replicas: 2
+  image: "nimbusdb/scheduler:latest"
+  grpcPort: 50052
+  metricsPort: 9091
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+controlPlane:
+  replicas: 2
+  image: "nimbusdb/control-plane:latest"
+  httpPort: 8081
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+workerNode:
+  replicas: 3
+  image: "nimbusdb/worker-node:latest"
+  grpcPort: 50053
+  debugPort: 8085
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  persistence:
+    enabled: true
+    size: "10Gi"
+
+gateway:
+  replicas: 2
+  image: "nimbusdb/gateway:latest"
+  httpPort: 8080
+  resources:
+    requests:
+      cpu: "150m"
+      memory: "128Mi"
+    limits:
+      cpu: "300m"
+      memory: "256Mi"
+
+deploymentController:
+  replicas: 1
+  image: "nimbusdb/deployment-controller:latest"
+  grpcPort: 50058
+  metricsPort: 8088
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+capacityPlanner:
+  replicas: 1
+  image: "nimbusdb/capacity-planner:latest"
+  grpcPort: 50059
+  metricsPort: 8089
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+slaMonitor:
+  replicas: 1
+  image: "nimbusdb/sla-monitor:latest"
+  grpcPort: 50060
+  metricsPort: 8090
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+dashboard:
+  replicas: 1
+  image: "nimbusdb/dashboard:latest"
+  port: 3000
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hostname: "nimbusdb.local"
+  tls:
+    enabled: true
+    secretName: "nimbusdb-tls-secret"
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 75

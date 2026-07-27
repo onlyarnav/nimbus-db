@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nimbusdb.fullname" . }}-metadata-service
+  labels:
+    app.kubernetes.io/name: metadata-service
+    {{- include "nimbusdb.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.metadataService.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: metadata-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: metadata-service
+    spec:
+      containers:
+        - name: metadata-service
+          image: {{ .Values.metadataService.image }}
+          ports:
+            - containerPort: {{ .Values.metadataService.httpPort }}
+              name: http
+            - containerPort: {{ .Values.metadataService.grpcPort }}
+              name: grpc
+          env:
+            - name: PORT
+              value: {{ .Values.metadataService.httpPort | quote }}
+            - name: GRPC_PORT
+              value: {{ .Values.metadataService.grpcPort | quote }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nimbusdb.fullname" . }}-secrets
+                  key: DATABASE_URL
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.metadataService.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nimbusdb.fullname" . }}-metadata-service
+  labels:
+    app.kubernetes.io/name: metadata-service
+    {{- include "nimbusdb.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.metadataService.httpPort }}
+      targetPort: http
+      name: http
+    - port: {{ .Values.metadataService.grpcPort }}
+      targetPort: grpc
+      name: grpc
+  selector:
+    app.kubernetes.io/name: metadata-service

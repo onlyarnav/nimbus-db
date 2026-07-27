@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "nimbusdb.fullname" . }}-worker-node
+  labels:
+    app.kubernetes.io/name: worker-node
+    {{- include "nimbusdb.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "nimbusdb.fullname" . }}-worker-node
+  replicas: {{ .Values.workerNode.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: worker-node
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: worker-node
+    spec:
+      containers:
+        - name: worker-node
+          image: {{ .Values.workerNode.image }}
+          ports:
+            - containerPort: {{ .Values.workerNode.grpcPort }}
+              name: grpc
+            - containerPort: {{ .Values.workerNode.debugPort }}
+              name: debug
+          env:
+            - name: NODE_AGENT_PORT
+              value: {{ .Values.workerNode.grpcPort | quote }}
+            - name: DEBUG_PORT
+              value: {{ .Values.workerNode.debugPort | quote }}
+            - name: METADATA_GRPC_ADDR
+              value: "{{ include "nimbusdb.fullname" . }}-metadata-service:{{ .Values.metadataService.grpcPort }}"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: debug
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: debug
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.workerNode.resources | nindent 12 }}
+          volumeMounts:
+            - name: node-storage-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: node-storage-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Values.workerNode.persistence.size }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nimbusdb.fullname" . }}-worker-node
+  labels:
+    app.kubernetes.io/name: worker-node
+    {{- include "nimbusdb.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.workerNode.grpcPort }}
+      targetPort: grpc
+      name: grpc
+    - port: {{ .Values.workerNode.debugPort }}
+      targetPort: debug
+      name: debug
+  selector:
+    app.kubernetes.io/name: worker-node
