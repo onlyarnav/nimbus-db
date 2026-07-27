@@ -26,15 +26,22 @@ func TestGRPCDatabaseMetadata(t *testing.T) {
 		dbURL = "postgres://postgres:password@localhost:5432/nimbusdb?sslmode=disable"
 	}
 
-	// Connect to database to verify it is running
-	testDB, err := sql.Open("pgx", dbURL)
-	if err != nil {
-		t.Skipf("Skipping integration tests: unable to connect to test postgres: %v", err)
-		return
+	// Connect to database to verify it is running (with 15s retry)
+	var testDB *sql.DB
+	var pingErr error
+	for i := 0; i < 15; i++ {
+		testDB, err = sql.Open("pgx", dbURL)
+		if err == nil {
+			pingErr = testDB.Ping()
+			if pingErr == nil {
+				break
+			}
+			testDB.Close()
+		}
+		time.Sleep(1 * time.Second)
 	}
-	if err := testDB.Ping(); err != nil {
-		testDB.Close()
-		t.Skipf("Skipping integration tests: unable to ping test postgres: %v", err)
+	if pingErr != nil {
+		t.Skipf("Skipping integration tests: unable to ping test postgres after 15s: %v", pingErr)
 		return
 	}
 	testDB.Close()

@@ -4,11 +4,11 @@ go 1.24.0
 
 require (
 	github.com/prometheus/client_golang v1.21.0
-	go.opentelemetry.io/otel v1.43.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.35.0
-	go.opentelemetry.io/otel/sdk v1.43.0
-	go.opentelemetry.io/otel/trace v1.43.0
-	google.golang.org/grpc v1.82.0
+	go.opentelemetry.io/otel v1.31.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.31.0
+	go.opentelemetry.io/otel/sdk v1.31.0
+	go.opentelemetry.io/otel/trace v1.31.0
+	google.golang.org/grpc v1.65.0
 )
 
 require (

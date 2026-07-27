@@ -22,15 +22,22 @@ func TestHealthManager_Classification(t *testing.T) {
 		dbURL = "postgres://postgres:password@localhost:5432/nimbusdb?sslmode=disable"
 	}
 
-	// Connect and ping check
-	testDB, err := sql.Open("pgx", dbURL)
-	if err != nil {
-		t.Skipf("Skipping integration: database connection failed: %v", err)
-		return
+	// Connect and ping check (with 15s retry)
+	var testDB *sql.DB
+	var pingErr error
+	for i := 0; i < 15; i++ {
+		testDB, err = sql.Open("pgx", dbURL)
+		if err == nil {
+			pingErr = testDB.Ping()
+			if pingErr == nil {
+				break
+			}
+			testDB.Close()
+		}
+		time.Sleep(1 * time.Second)
 	}
-	if err := testDB.Ping(); err != nil {
-		testDB.Close()
-		t.Skipf("Skipping integration: database ping failed: %v", err)
+	if pingErr != nil {
+		t.Skipf("Skipping integration: database ping failed after 15s: %v", pingErr)
 		return
 	}
 	testDB.Close()

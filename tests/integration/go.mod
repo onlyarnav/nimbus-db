@@ -12,9 +12,9 @@ require (
 	github.com/onlyarnav/nimbusdb/services/scheduler v0.0.0
 	github.com/onlyarnav/nimbusdb/services/sla-monitor v0.0.0
 	github.com/onlyarnav/nimbusdb/services/worker-node v0.0.0
-	go.opentelemetry.io/otel v1.43.0
-	go.opentelemetry.io/otel/sdk v1.43.0
-	google.golang.org/grpc v1.82.0
+	go.opentelemetry.io/otel v1.31.0
+	go.opentelemetry.io/otel/sdk v1.31.0
+	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.36.11
 )
 
