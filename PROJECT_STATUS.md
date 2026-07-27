@@ -44,8 +44,8 @@ Everything from here forward is build execution, tracked in Section 2.
 | 6 — AI-Ready Database                  | ✅ Complete | 2026-07-25 | 2026-07-25 | All steps 1-8 of suggested build order complete: HNSW ANN index choice ADR, VectorRecord data model (id, data, embedding, metadata) with WAL durability, exact cosine search, hand-checked mathematical correctness test, metadata pre-filtering (0% leakage), hybrid B+Tree range + vector similarity search, HNSW graph index implementation with 100% recall@10 benchmark, crash-consistency kill recovery test for vector inserts, and updated README. |
 | 7 — Cloud Operations                       | ✅ Complete | 2026-07-26 | 2026-07-26 | All steps 1-10 of suggested build order complete: Node Draining, zero-loss evacuation integration test, Deployment Controller microservice (Rolling, Canary with 201.37ms auto-rollback, Blue-Green), Auto-scaling engine (scale-out/scale-in with 60ms cooldown), Capacity Planner microservice (linear regression), SLA Monitor microservice (99.90% availability, p95/p99 latency, MTTR), Gateway REST edge operational endpoints, ADRs logged, service READMEs, and non-goals audit passed. |
 | 8 — Security                                  | ✅ Complete | 2026-07-26 | 2026-07-26 | All steps 1-12 complete: Endpoint Audit (`docs/security-audit.md`), Auth Approach ADR (`docs/decisions/auth-approach.md`), TLS & In-Transit ADR (`docs/decisions/encryption-in-transit.md`), `services/auth-service` (JWT signing/verification, API key hashing, instant revocation, rate limiting), REST Auth Middleware & gRPC Server Interceptors across all Phase 1-7 services, RBAC enforcement (`admin`, `operator`, `read-only`), 5 E2E integration test scenarios (audit re-check, RBAC denial, API key revocation, rate limiting, git log secrets scan), benchmarks recorded, README written, and non-goals check passed (confirming legal-hold exclusion). |
-| 9 — Kubernetes Deployment                        | ⬜ Not started | — | — | Blocked on Phase 8 (unblocked now). StatefulSet vs Deployment decision pending. |
-| 10 — CI/CD                                          | ⬜ Not started | — | — | Blocked on Phase 9. Final phase. |
+| 9 — Kubernetes Deployment                        | ✅ Complete | 2026-07-27 | 2026-07-27 | All steps 1-12 complete: Dockerfile audit & multi-stage non-root updates, Workload Types ADR (`docs/decisions/k8s-workload-types.md`), HPA vs App-Autoscaler ADR (`docs/decisions/hpa-vs-app-autoscaler.md`), Umbrella Helm Chart (`deploy/helm/nimbusdb`), StatefulSets with PVCs for Metadata/Postgres & NodeAgent, Deployments for stateless services, Ingress TLS edge isolation, HPA scaling, 5 integration test scenarios (`phase9_test.go`), benchmarks recorded, and README written. |
+| 10 — CI/CD                                          | ⬜ Not started | — | — | Blocked on Phase 9 (unblocked now). Final phase. |
 
 Status values: ⬜ Not started · 🟡 In progress · ✅ Complete · 🔴 Blocked
 
@@ -68,8 +68,8 @@ finished and verified — never on partial progress.
 | Consistency model: eventual vs strong | Phase 4, Section 3 | ✅ Resolved | `docs/decisions/consistency-model.md` |
 | ANN index: HNSW vs IVF | Phase 6, Section 4.2 | ✅ Resolved | `docs/decisions/ann-index-choice.md` |
 | Auth approach: JWT bearer vs full OAuth2 | Phase 8, Section 4.1 | ✅ Resolved | `docs/decisions/auth-approach.md` |
-| K8s workload types (StatefulSet vs Deployment per service) | Phase 9, Section 6.2 | ⬜ Pending | — |
-| HPA vs Phase 7's app-level autoscaler | Phase 9, Section 6.1 | ⬜ Pending (recommendation: both, different layers) | — |
+| K8s workload types (StatefulSet vs Deployment per service) | Phase 9, Section 6.2 | ✅ Resolved | `docs/decisions/k8s-workload-types.md` |
+| HPA vs Phase 7's app-level autoscaler | Phase 9, Section 6.1 | ✅ Resolved | `docs/decisions/hpa-vs-app-autoscaler.md` |
 | Release strategy: merge-to-main vs tag-based | Phase 10, Section 4.1 | ⬜ Pending | — |
 
 Once resolved, each decision gets a file in `docs/decisions/` and this
