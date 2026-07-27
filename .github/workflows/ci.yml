@@ -47,9 +47,9 @@ jobs:
           cd services/metadata-service
           go test -v ./...
 
-      - name: Test Security Integration Suite
+      - name: Test Integration Suite (Phase 8 & Phase 9)
         env:
           GOLANG_PROTOBUF_REGISTRATION_CONFLICT: warn
         run: |
           cd tests/integration
-          go test -v -run TestPhase8 .
+          go test -v ./...
