@@ -1,10 +1,16 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.24-alpine AS builder
 WORKDIR /app
-COPY . .
-RUN go build -o /auth-service ./services/auth-service
+
+COPY services/observability ./services/observability
+COPY services/auth-service ./services/auth-service
+
+WORKDIR /app/services/auth-service
+RUN CGO_ENABLED=0 go build -o /app/auth-service .
 
 FROM alpine:latest
-WORKDIR /root/
-COPY --from=builder /auth-service .
+RUN adduser -D -u 10001 appuser
+WORKDIR /home/appuser
+COPY --from=builder /app/auth-service .
+USER appuser
 EXPOSE 8087
-CMD ["./auth-service"]
+ENTRYPOINT ["./auth-service"]

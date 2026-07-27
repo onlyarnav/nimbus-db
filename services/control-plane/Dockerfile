@@ -1,10 +1,18 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.24-alpine AS builder
 WORKDIR /app
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o control-plane .
+
+COPY services/observability ./services/observability
+COPY services/auth-service ./services/auth-service
+COPY services/metadata-service ./services/metadata-service
+COPY services/control-plane ./services/control-plane
+
+WORKDIR /app/services/control-plane
+RUN CGO_ENABLED=0 go build -o /app/control-plane-service .
 
 FROM alpine:latest
-WORKDIR /app
-COPY --from=builder /app/control-plane .
-EXPOSE 8082
-CMD ["./control-plane"]
+RUN adduser -D -u 10001 appuser
+WORKDIR /home/appuser
+COPY --from=builder /app/control-plane-service .
+USER appuser
+EXPOSE 8081
+ENTRYPOINT ["./control-plane-service"]
