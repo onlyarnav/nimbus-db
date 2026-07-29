@@ -2,15 +2,31 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "**" ]
   pull_request:
     branches: [ main ]
 
 jobs:
-  test:
-    name: Build and Test
+  lint:
+    name: Code Quality & Linting
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+
+      - name: Run Go vet
+        run: |
+          cd services/metadata-service && go vet ./...
+          cd ../auth-service && go vet ./...
+
+  unit-tests:
+    name: Unit Test Suite
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16-alpine
@@ -47,9 +63,54 @@ jobs:
           cd services/metadata-service
           go test -v ./...
 
-      - name: Test Integration Suite (Phase 8 & Phase 9)
+  integration-tests:
+    name: Integration Test Suite
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+
+      - name: Run Integration Tests
         env:
           GOLANG_PROTOBUF_REGISTRATION_CONFLICT: warn
         run: |
           cd tests/integration
           go test -v ./...
+
+  docker-build:
+    name: Docker Image Build Validation
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Auth Service Image
+        run: docker build -t nimbusdb/auth-service:${{ github.sha }} -f services/auth-service/Dockerfile .
+
+      - name: Build Gateway Image
+        run: docker build -t nimbusdb/gateway:${{ github.sha }} -f services/gateway/Dockerfile .
+
+  helm-validation:
+    name: Helm Chart Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.0
+
+      - name: Lint Helm Chart
+        run: helm lint deploy/helm/nimbusdb
+
+      - name: Template Helm Chart
+        run: helm template release-test deploy/helm/nimbusdb
