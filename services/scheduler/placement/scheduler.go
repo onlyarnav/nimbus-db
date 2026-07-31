@@ -3,7 +3,7 @@ package placement
 import (
 	"errors"
 
-	pb "github.com/onlyarnav/nimbusdb/services/scheduler/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
 
 // ErrNoNodesAvailable is returned when no nodes are available to host database workloads.

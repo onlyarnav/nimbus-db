@@ -75,7 +75,7 @@ impl ReplicationEngine {
 
         let mut channel_map = followers_state.lock().unwrap();
         for follower_id in followers.keys() {
-            let stream = channel_map.entry(follower_id.clone()).or_insert_with(Vec::new);
+            let stream = channel_map.entry(follower_id.clone()).or_default();
             stream.push(record.clone());
         }
         drop(channel_map);

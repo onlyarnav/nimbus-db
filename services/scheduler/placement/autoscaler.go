@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/onlyarnav/nimbusdb/services/scheduler/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
 
 type AutoScaleAction string

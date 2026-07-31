@@ -48,7 +48,7 @@ mod tests {
         // doc-D: [-1, 0] -> cosine sim with [1, 0] is -1.0
 
         engine.insert_vector("doc-A".to_string(), vec![], vec![1.0, 0.0], HashMap::new()).unwrap();
-        engine.insert_vector("doc-B".to_string(), vec![], vec![0.70710678, 0.70710678], HashMap::new()).unwrap();
+        engine.insert_vector("doc-B".to_string(), vec![], vec![std::f32::consts::FRAC_1_SQRT_2, std::f32::consts::FRAC_1_SQRT_2], HashMap::new()).unwrap();
         engine.insert_vector("doc-C".to_string(), vec![], vec![0.0, 1.0], HashMap::new()).unwrap();
         engine.insert_vector("doc-D".to_string(), vec![], vec![-1.0, 0.0], HashMap::new()).unwrap();
 
@@ -60,7 +60,7 @@ mod tests {
         assert!((results[0].similarity - 1.0).abs() < 1e-4);
 
         assert_eq!(results[1].id, "doc-B");
-        assert!((results[1].similarity - 0.7071).abs() < 1e-3);
+        assert!((results[1].similarity - std::f32::consts::FRAC_1_SQRT_2).abs() < 1e-3);
 
         assert_eq!(results[2].id, "doc-C");
         assert!((results[2].similarity - 0.0).abs() < 1e-4);
@@ -118,7 +118,7 @@ mod tests {
         // Hybrid range scan on key range vec:doc-05 to vec:doc-10
         let results = engine.hybrid_search(&query, "vec:doc-05", "vec:doc-10", 10);
 
-        assert!(results.len() > 0);
+        assert!(!results.is_empty());
         for res in &results {
             assert!(res.id.as_str() >= "doc-05" && res.id.as_str() <= "doc-10");
         }

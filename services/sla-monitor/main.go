@@ -16,7 +16,7 @@ import (
 	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 	"github.com/onlyarnav/nimbusdb/services/sla-monitor/monitor"
-	pb "github.com/onlyarnav/nimbusdb/services/sla-monitor/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/deployment-controller/proto"
 )
 
 func main() {

@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	pb "github.com/onlyarnav/nimbusdb/tests/integration/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
 
 func TestClusterIntegration(t *testing.T) {

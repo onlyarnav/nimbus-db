@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	pb "github.com/onlyarnav/nimbusdb/services/scheduler/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
 
 func TestCalculateScore(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/onlyarnav/nimbusdb/services/sla-monitor/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/deployment-controller/proto"
 )
 
 func TestSLAReportAggregation(t *testing.T) {

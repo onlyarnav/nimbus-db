@@ -129,6 +129,7 @@ pub enum SyncPolicy {
 }
 
 pub struct WalManager {
+    #[allow(dead_code)]
     path: PathBuf,
     file: File,
     next_lsn: u64,
@@ -142,6 +143,7 @@ impl WalManager {
             .read(true)
             .write(true)
             .create(true)
+            .truncate(false)
             .open(&path_buf)
             .map_err(|e| format!("Failed to open WAL file: {}", e))?;
 

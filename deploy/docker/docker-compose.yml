@@ -20,8 +20,8 @@ services:
 
   metadata-service:
     build:
-      context: ../../services/metadata-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/metadata-service/Dockerfile
     container_name: nimbusdb_metadata
     environment:
       DATABASE_URL: postgres://postgres:password@postgres:5432/nimbusdb?sslmode=disable
@@ -36,8 +36,8 @@ services:
 
   scheduler:
     build:
-      context: ../../services/scheduler
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/scheduler/Dockerfile
     container_name: nimbusdb_scheduler
     environment:
       METADATA_GRPC_ADDR: metadata-service:50051
@@ -49,8 +49,8 @@ services:
 
   worker-1:
     build:
-      context: ../../services/worker-node
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/worker-node/Dockerfile
     container_name: nimbusdb_worker_1
     environment:
       METADATA_GRPC_ADDR: metadata-service:50051
@@ -65,8 +65,8 @@ services:
 
   worker-2:
     build:
-      context: ../../services/worker-node
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/worker-node/Dockerfile
     container_name: nimbusdb_worker_2
     environment:
       METADATA_GRPC_ADDR: metadata-service:50051
@@ -81,8 +81,8 @@ services:
 
   worker-3:
     build:
-      context: ../../services/worker-node
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/worker-node/Dockerfile
     container_name: nimbusdb_worker_3
     environment:
       METADATA_GRPC_ADDR: metadata-service:50051
@@ -97,8 +97,8 @@ services:
 
   control-plane:
     build:
-      context: ../../services/control-plane
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/control-plane/Dockerfile
     container_name: nimbusdb_control_plane
     environment:
       METADATA_GRPC_ADDR: metadata-service:50051

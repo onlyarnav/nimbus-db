@@ -38,6 +38,9 @@ type Claims struct {
 func getSecretKey() []byte {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
+		if os.Getenv("ENV") == "production" || os.Getenv("NODE_ENV") == "production" {
+			panic("JWT_SECRET environment variable MUST be set in production")
+		}
 		secret = "nimbusdb-dev-secret-key-32-bytes-long!"
 	}
 	return []byte(secret)

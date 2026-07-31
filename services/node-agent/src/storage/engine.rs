@@ -251,6 +251,10 @@ impl StorageEngine {
     pub fn len(&self) -> usize {
         self.active_records.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.active_records.is_empty()
+    }
 }
 
 #[cfg(test)]

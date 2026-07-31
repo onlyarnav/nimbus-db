@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/onlyarnav/nimbusdb/services/sla-monitor/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/deployment-controller/proto"
 )
 
 // RequestRecord tracks latency and success status of a single request.

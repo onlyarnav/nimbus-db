@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/onlyarnav/nimbusdb/services/scheduler/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
 
 func TestAutoScalerScaleOut(t *testing.T) {

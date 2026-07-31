@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/onlyarnav/nimbusdb/services/metadata-service/region"
-	pb "github.com/onlyarnav/nimbusdb/services/scheduler/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
 
 // RegionScheduleResult contains the chosen node and the region that served the request.

@@ -46,11 +46,7 @@ impl CompactionEngine {
         }
 
         let free_after = page_mgr.get_free_page_count();
-        let space_reclaimed_pages = if free_after > free_before {
-            free_after - free_before
-        } else {
-            0
-        };
+        let space_reclaimed_pages = free_after.saturating_sub(free_before);
 
         Ok(CompactionStats {
             pages_scanned: data_pages.len(),

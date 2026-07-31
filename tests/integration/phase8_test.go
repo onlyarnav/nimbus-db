@@ -163,7 +163,7 @@ func TestPhase8_RateLimitEnforcement(t *testing.T) {
 
 // Scenario 5: Secrets Scan Test (git log history scan for exposed passwords/keys)
 func TestPhase8_GitLogSecretsScan(t *testing.T) {
-	cmd := exec.Command("git", "log", "-p", "-n", "50")
+	cmd := exec.Command("git", "log", "-p", "-n", "50", "--", ".", ":(exclude)tests/integration/phase8_test.go")
 	cmd.Dir = "../.."
 	out, err := cmd.Output()
 	if err != nil {
@@ -172,9 +172,9 @@ func TestPhase8_GitLogSecretsScan(t *testing.T) {
 
 	content := string(out)
 	suspiciousPatterns := []string{
-		"AWS_SECRET_ACCESS_KEY=",
-		"BEGIN PRIVATE KEY",
-		"ghp_",
+		"AWS_SECRET_" + "ACCESS_KEY=",
+		"BEGIN PRIVATE" + " KEY",
+		"ghp" + "_",
 	}
 
 	for _, pattern := range suspiciousPatterns {

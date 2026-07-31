@@ -236,6 +236,22 @@ impl NodeAgent for NodeAgentService {
             error: "".to_string(),
         }))
     }
+
+    async fn drain_node(
+        &self,
+        request: Request<DrainNodeRequest>,
+    ) -> Result<Response<DrainNodeResponse>, Status> {
+        let _req = request.into_inner();
+        let mut engines = self.engines.lock().map_err(|e| Status::internal(e.to_string()))?;
+        let count = engines.len() as i32;
+        engines.clear();
+
+        Ok(Response::new(DrainNodeResponse {
+            success: true,
+            databases_moved: count,
+            error: "".to_string(),
+        }))
+    }
 }
 
 #[tokio::main]

@@ -3,7 +3,7 @@ package placement
 import (
 	"testing"
 
-	pb "github.com/onlyarnav/nimbusdb/services/scheduler/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
 
 func TestScheduleNodeWithRegionFallback_PreferredHealthy(t *testing.T) {

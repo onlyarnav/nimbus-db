@@ -17,7 +17,7 @@ import (
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 	"github.com/onlyarnav/nimbusdb/services/scheduler/config"
 	schedgrpc "github.com/onlyarnav/nimbusdb/services/scheduler/grpc"
-	pb "github.com/onlyarnav/nimbusdb/services/scheduler/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
 
 func main() {

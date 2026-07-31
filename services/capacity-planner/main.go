@@ -15,7 +15,7 @@ import (
 
 	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/capacity-planner/planner"
-	pb "github.com/onlyarnav/nimbusdb/services/capacity-planner/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/deployment-controller/proto"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 )
 

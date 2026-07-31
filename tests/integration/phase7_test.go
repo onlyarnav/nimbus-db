@@ -10,9 +10,9 @@ import (
 	depCtrl "github.com/onlyarnav/nimbusdb/services/deployment-controller/controller"
 	depPb "github.com/onlyarnav/nimbusdb/services/deployment-controller/proto"
 	slaMon "github.com/onlyarnav/nimbusdb/services/sla-monitor/monitor"
-	slaPb "github.com/onlyarnav/nimbusdb/services/sla-monitor/proto"
+	slaPb "github.com/onlyarnav/nimbusdb/services/deployment-controller/proto"
 	schedPlacement "github.com/onlyarnav/nimbusdb/services/scheduler/placement"
-	schedPb "github.com/onlyarnav/nimbusdb/services/scheduler/proto"
+	schedPb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 	workerAgent "github.com/onlyarnav/nimbusdb/services/worker-node/agent"
 	workerPb "github.com/onlyarnav/nimbusdb/services/worker-node/proto/nodeagent"
 )

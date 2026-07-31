@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 
-	pb "github.com/onlyarnav/nimbusdb/services/capacity-planner/proto"
+	pb "github.com/onlyarnav/nimbusdb/services/deployment-controller/proto"
 )
 
 // MetricSample represents a single point in a historical time series.

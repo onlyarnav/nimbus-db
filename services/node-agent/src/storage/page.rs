@@ -142,6 +142,7 @@ impl Page {
 }
 
 pub struct PageManager {
+    #[allow(dead_code)]
     file_path: PathBuf,
     file: File,
     free_pages: Vec<u64>,
@@ -155,12 +156,13 @@ impl PageManager {
             .read(true)
             .write(true)
             .create(true)
+            .truncate(false)
             .open(&path_buf)
             .map_err(|e| format!("Failed to open page file: {}", e))?;
 
         let metadata = file.metadata().map_err(|e| e.to_string())?;
         let file_len = metadata.len();
-        let total_pages = (file_len / PAGE_SIZE as u64) as u64;
+        let total_pages = file_len / PAGE_SIZE as u64;
 
         let mut pm = PageManager {
             file_path: path_buf,

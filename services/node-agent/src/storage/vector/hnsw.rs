@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::cmp::Ordering;
 use rand::Rng;
 
 use crate::storage::vector::distance::cosine_similarity;
@@ -277,6 +276,10 @@ impl HnswIndex {
     pub fn len(&self) -> usize {
         self.nodes.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
+    }
 }
 
 #[cfg(test)]
@@ -310,7 +313,7 @@ mod tests {
         assert!(index.remove("v1"));
         assert_eq!(index.len(), 1);
 
-        let results = index.search(&vec![1.0, 0.0, 0.0], 2);
+        let results = index.search(&[1.0, 0.0, 0.0], 2);
         assert_eq!(results[0].id, "v2");
     }
 }
