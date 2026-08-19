@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -35,6 +36,7 @@ func TestGRPCNodeRegistration(t *testing.T) {
 	// Connect to database to verify it is running (with 15s retry)
 	var testDB *sql.DB
 	var pingErr error
+	var err error
 	for i := 0; i < 15; i++ {
 		testDB, err = sql.Open("pgx", dbURL)
 		if err == nil {

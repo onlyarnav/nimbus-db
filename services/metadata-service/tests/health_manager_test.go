@@ -25,6 +25,7 @@ func TestHealthManager_Classification(t *testing.T) {
 	// Connect and ping check (with 15s retry)
 	var testDB *sql.DB
 	var pingErr error
+	var err error
 	for i := 0; i < 15; i++ {
 		testDB, err = sql.Open("pgx", dbURL)
 		if err == nil {

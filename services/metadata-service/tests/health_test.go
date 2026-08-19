@@ -77,6 +77,7 @@ func TestDatabaseMigrationAndSchema(t *testing.T) {
 	// First verify if we can connect to PG with retry
 	var testDB *sql.DB
 	var pingErr error
+	var err error
 	for i := 0; i < 15; i++ {
 		testDB, err = sql.Open("pgx", dbURL)
 		if err == nil {
