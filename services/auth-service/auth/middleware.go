@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -149,5 +150,18 @@ func UnaryServerInterceptor(roleMap map[string]string) grpc.UnaryServerIntercept
 		}
 
 		return handler(ctx, req)
+	}
+}
+
+// UnaryClientInterceptor attaches a short-lived bearer token to internal gRPC
+// calls. Services must still set JWT_SECRET; no client-side default is used.
+func UnaryClientInterceptor(serviceID, role string) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		token, err := IssueToken(serviceID, role, 5*time.Minute)
+		if err != nil {
+			return status.Errorf(codes.Unauthenticated, "issue internal service token: %v", err)
+		}
+		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
+		return invoker(ctx, method, req, reply, cc, opts...)
 	}
 }
