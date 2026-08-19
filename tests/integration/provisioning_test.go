@@ -6,12 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"testing"
 	"time"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
@@ -45,12 +43,14 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 	t.Log("Starting docker-compose services...")
 	// Force rebuilding of control-plane and worker-node
 	cmdUp := exec.Command("docker", "compose", "-f", "../../deploy/docker/docker-compose.yml", "up", "-d", "--build")
+	cmdUp.Env = os.Environ()
 	if out, err := cmdUp.CombinedOutput(); err != nil {
 		t.Fatalf("failed to start docker-compose: %v\nOutput: %s", err, string(out))
 	}
 	defer func() {
 		t.Log("Cleaning up docker-compose services...")
 		cmdDown := exec.Command("docker", "compose", "-f", "../../deploy/docker/docker-compose.yml", "down", "-v")
+		cmdDown.Env = os.Environ()
 		_ = cmdDown.Run()
 	}()
 
@@ -64,7 +64,7 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 			ClusterID: "00000000-0000-0000-0000-000000000000",
 		}
 		body, _ := json.Marshal(req)
-		resp, err := http.Post("http://localhost:8085/v1/databases", "application/json", bytes.NewReader(body))
+		resp, err := authorizedHTTP(t, http.MethodPost, "http://localhost:8085/v1/databases", bytes.NewReader(body))
 		if err != nil {
 			t.Fatalf("failed to post database creation: %v", err)
 		}
@@ -79,7 +79,7 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 		active := false
 		var dbDetails DatabaseResponse
 		for i := 0; i < 20; i++ {
-			getResp, err := http.Get("http://localhost:8085/v1/databases/" + createResp.DatabaseID)
+			getResp, err := authorizedHTTP(t, http.MethodGet, "http://localhost:8085/v1/databases/"+createResp.DatabaseID, nil)
 			if err == nil && getResp.StatusCode == http.StatusOK {
 				_ = json.NewDecoder(getResp.Body).Decode(&dbDetails)
 				getResp.Body.Close()
@@ -102,7 +102,7 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 	// 2. Retry Path
 	t.Run("RetryPath", func(t *testing.T) {
 		// Dial scheduler to find which node it will pick first
-		conn, err := grpc.Dial("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := authenticatedGRPCDial(context.Background(), "localhost:50052")
 		if err != nil {
 			t.Fatalf("failed to dial scheduler: %v", err)
 		}
@@ -116,7 +116,7 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 		nodeID := res.GetNodeId()
 
 		// Get node details to find hostname
-		connMeta, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		connMeta, err := authenticatedGRPCDial(context.Background(), "localhost:50051")
 		if err != nil {
 			t.Fatalf("failed to dial metadata: %v", err)
 		}
@@ -162,7 +162,7 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 			ClusterID: "00000000-0000-0000-0000-000000000000",
 		}
 		body, _ := json.Marshal(req)
-		resp, err := http.Post("http://localhost:8085/v1/databases", "application/json", bytes.NewReader(body))
+		resp, err := authorizedHTTP(t, http.MethodPost, "http://localhost:8085/v1/databases", bytes.NewReader(body))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -174,7 +174,7 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 		active := false
 		var dbDetails DatabaseResponse
 		for i := 0; i < 20; i++ {
-			getResp, err := http.Get("http://localhost:8085/v1/databases/" + createResp.DatabaseID)
+			getResp, err := authorizedHTTP(t, http.MethodGet, "http://localhost:8085/v1/databases/"+createResp.DatabaseID, nil)
 			if err == nil && getResp.StatusCode == http.StatusOK {
 				_ = json.NewDecoder(getResp.Body).Decode(&dbDetails)
 				getResp.Body.Close()
@@ -212,7 +212,7 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 			ClusterID: "00000000-0000-0000-0000-000000000000",
 		}
 		body, _ := json.Marshal(req)
-		resp, err := http.Post("http://localhost:8085/v1/databases", "application/json", bytes.NewReader(body))
+		resp, err := authorizedHTTP(t, http.MethodPost, "http://localhost:8085/v1/databases", bytes.NewReader(body))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -224,7 +224,7 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 		failed := false
 		var dbDetails DatabaseResponse
 		for i := 0; i < 20; i++ {
-			getResp, err := http.Get("http://localhost:8085/v1/databases/" + createResp.DatabaseID)
+			getResp, err := authorizedHTTP(t, http.MethodGet, "http://localhost:8085/v1/databases/"+createResp.DatabaseID, nil)
 			if err == nil && getResp.StatusCode == http.StatusOK {
 				_ = json.NewDecoder(getResp.Body).Decode(&dbDetails)
 				getResp.Body.Close()
@@ -259,7 +259,7 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 			ClusterID: "00000000-0000-0000-0000-000000000000",
 		}
 		body, _ := json.Marshal(req)
-		resp, err := http.Post("http://localhost:8085/v1/databases", "application/json", bytes.NewReader(body))
+		resp, err := authorizedHTTP(t, http.MethodPost, "http://localhost:8085/v1/databases", bytes.NewReader(body))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -273,8 +273,19 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 		cmdKill := exec.Command("docker", "stop", "nimbusdb_control_plane")
 		_ = cmdKill.Run()
 
+		// Restore worker availability before the reconciler retries. The hang is
+		// only needed to create an interrupted provisioning operation; keeping
+		// every worker hung would make successful recovery impossible.
+		for _, port := range []string{"8081", "8082", "8083"} {
+			clearResp, clearErr := http.Post(fmt.Sprintf("http://localhost:%s/debug/inject-failure?attempts=0&hang=0", port), "application/json", nil)
+			if clearErr != nil || clearResp.StatusCode != http.StatusOK {
+				t.Fatalf("failed to clear injected failure on worker port %s: %v", port, clearErr)
+			}
+			clearResp.Body.Close()
+		}
+
 		// Verify database remains stuck in provisioning state
-		connMeta, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		connMeta, err := authenticatedGRPCDial(context.Background(), "localhost:50051")
 		if err != nil {
 			t.Fatalf("failed to dial metadata: %v", err)
 		}
@@ -302,7 +313,7 @@ func TestDatabaseProvisioningIntegration(t *testing.T) {
 		active := false
 		var dbDetails DatabaseResponse
 		for i := 0; i < 45; i++ {
-			getResp, err := http.Get("http://localhost:8085/v1/databases/" + createResp.DatabaseID)
+			getResp, err := authorizedHTTP(t, http.MethodGet, "http://localhost:8085/v1/databases/"+createResp.DatabaseID, nil)
 			if err == nil && getResp.StatusCode == http.StatusOK {
 				_ = json.NewDecoder(getResp.Body).Decode(&dbDetails)
 				getResp.Body.Close()
