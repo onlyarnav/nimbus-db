@@ -66,9 +66,12 @@ func (g *GatewayHandlers) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /v1/nodes/{id}/drain", auth.AuthenticateAndAuthorize(auth.RoleAdmin)(http.HandlerFunc(g.handleDrainNode)))
 	mux.Handle("GET /v1/capacity/projection", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(g.handleGetCapacityProjection)))
 	mux.Handle("GET /v1/sla/report", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(g.handleGetSLAReport)))
+	mux.HandleFunc("GET /v1/nodes", g.handleListNodes)
+	mux.HandleFunc("OPTIONS /v1/nodes", g.handleListNodes)
 	mux.HandleFunc("GET /health", g.handleHealth)
 	mux.Handle("GET /metrics", telemetry.MetricsHandler())
 }
+
 
 func (g *GatewayHandlers) handleCreateDatabase(w http.ResponseWriter, r *http.Request) {
 	var req CreateDatabaseRequest
@@ -334,3 +337,61 @@ func (g *GatewayHandlers) handleGetSLAReport(w http.ResponseWriter, r *http.Requ
 		"sloMet":          true,
 	})
 }
+
+func (g *GatewayHandlers) handleListNodes(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	ctx := r.Context()
+	nodesRes, err := g.metadataClient.GetNodes(ctx, &pb.GetNodesRequest{})
+	if err != nil {
+		http.Error(w, "failed to get nodes: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	type NodeInfo struct {
+		ID            string  `json:"id"`
+		ClusterID     string  `json:"cluster_id"`
+		Hostname      string  `json:"hostname"`
+		Status        string  `json:"status"`
+		CPUPct        float32 `json:"cpu_pct"`
+		MemoryPct     float32 `json:"memory_pct"`
+		DiskPct       float32 `json:"disk_pct"`
+		LastHeartbeat *string `json:"last_heartbeat"`
+		RegisteredAt  string  `json:"registered_at"`
+	}
+
+	var list []NodeInfo
+	for _, n := range nodesRes.GetNodes() {
+		var lastHB *string
+		if n.GetLastHeartbeat() != "" {
+			hb := n.GetLastHeartbeat()
+			lastHB = &hb
+		}
+		regAt := n.GetRegisteredAt()
+		list = append(list, NodeInfo{
+			ID:            n.GetId(),
+			ClusterID:     n.GetClusterId(),
+			Hostname:      n.GetHostname(),
+			Status:        n.GetStatus(),
+			CPUPct:        n.GetCpuPct(),
+			MemoryPct:     n.GetMemoryPct(),
+			DiskPct:       n.GetDiskPct(),
+			LastHeartbeat: lastHB,
+			RegisteredAt:  regAt,
+		})
+	}
+	if list == nil {
+		list = []NodeInfo{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(list)
+}
+

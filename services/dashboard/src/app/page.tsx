@@ -48,6 +48,7 @@ const STATIC_REGIONS = ['india', 'us-east', 'us-west', 'europe', 'japan'];
 
 const LATENCY_MATRIX: Record<string, Record<string, number>> = {
   'india': { 'india': 0, 'us-east': 180, 'us-west': 220, 'europe': 110, 'japan': 130 },
+
   'us-east': { 'india': 180, 'us-east': 0, 'us-west': 60, 'europe': 90, 'japan': 160 },
   'us-west': { 'india': 220, 'us-east': 60, 'us-west': 0, 'europe': 140, 'japan': 110 },
   'europe': { 'india': 110, 'us-east': 90, 'us-west': 140, 'europe': 0, 'japan': 210 },
@@ -74,7 +75,10 @@ export default function Home() {
 
   const fetchNodesAndRegions = async () => {
     try {
-      const res = await fetch('http://localhost:8080/v1/nodes');
+      let res = await fetch('/api/nodes', { cache: 'no-store' });
+      if (!res.ok) {
+        res = await fetch('http://localhost:8080/v1/nodes', { cache: 'no-store' });
+      }
       if (!res.ok) {
         throw new Error(`Failed to fetch nodes: ${res.statusText}`);
       }
