@@ -41,3 +41,5 @@ require (
 )
 
 replace github.com/onlyarnav/nimbusdb/services/observability => ../observability
+replace github.com/onlyarnav/nimbusdb/services/deployment-controller => ../deployment-controller
+
