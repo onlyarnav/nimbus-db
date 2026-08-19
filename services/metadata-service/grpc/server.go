@@ -45,6 +45,8 @@ func (s *Server) RegisterNode(ctx context.Context, req *pb.RegisterNodeRequest) 
 	var nodeID string
 	query := "INSERT INTO nodes (cluster_id, hostname, status) VALUES ($1, $2, 'healthy') RETURNING id"
 	err := s.db.QueryRow(ctx, query, clusterID, hostname).Scan(&nodeID)
+
+
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
