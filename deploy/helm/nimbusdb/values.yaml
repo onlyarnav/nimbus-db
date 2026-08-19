@@ -1,6 +1,8 @@
 global:
   environment: development
-  jwtSecret: "nimbusdb-dev-secret-key-32-bytes-long!"
+  imagePullPolicy: IfNotPresent
+  # Required at install time: pass via --set-string or a values file kept out of source control.
+  jwtSecret: ""
   regionMap:
     india: "nimbus-region-india"
     us-east: "nimbus-region-us-east"
@@ -13,7 +15,8 @@ postgres:
   replicas: 1
   image: "postgres:16-alpine"
   user: "nimbus"
-  password: "nimbuspassword123"
+  # Required at install time: pass via --set-string or a values file kept out of source control.
+  password: ""
   database: "nimbusdb"
   port: 5432
   resources:
