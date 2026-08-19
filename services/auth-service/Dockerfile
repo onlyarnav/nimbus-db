@@ -5,7 +5,7 @@ COPY services/observability ./services/observability
 COPY services/auth-service ./services/auth-service
 
 WORKDIR /app/services/auth-service
-RUN CGO_ENABLED=0 go build -o /app/auth-service .
+RUN go mod tidy && CGO_ENABLED=0 go build -o /app/auth-service .
 
 FROM alpine:latest
 RUN adduser -D -u 10001 appuser
