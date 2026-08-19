@@ -1,6 +1,6 @@
 module github.com/onlyarnav/nimbusdb/services/metadata-service
 
-go 1.25.0
+go 1.24.0
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.17.1
