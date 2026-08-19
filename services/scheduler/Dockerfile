@@ -7,7 +7,7 @@ COPY services/metadata-service ./services/metadata-service
 COPY services/scheduler ./services/scheduler
 
 WORKDIR /app/services/scheduler
-RUN CGO_ENABLED=0 go build -o /app/scheduler-service .
+RUN go mod tidy && CGO_ENABLED=0 go build -o /app/scheduler-service .
 
 FROM alpine:latest
 RUN adduser -D -u 10001 appuser

@@ -14,10 +14,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
+	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 	"github.com/onlyarnav/nimbusdb/services/scheduler/config"
 	schedgrpc "github.com/onlyarnav/nimbusdb/services/scheduler/grpc"
-	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
 
 func main() {
@@ -47,7 +47,10 @@ func main() {
 
 	// Dial Metadata Service gRPC server
 	slog.Info("connecting to metadata service", "address", cfg.MetadataGRPCAddr)
-	metaConn, err := grpc.DialContext(ctx, cfg.MetadataGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	metaConn, err := grpc.DialContext(ctx, cfg.MetadataGRPCAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor("scheduler", auth.RoleReadOnly)),
+	)
 	if err != nil {
 		slog.Error("failed to connect to metadata service", "error", err)
 		os.Exit(1)
