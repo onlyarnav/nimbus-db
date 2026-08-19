@@ -2,7 +2,9 @@ package integration
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"os"
 	"os/exec"
 	"testing"
 	"time"
@@ -10,8 +12,46 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 )
+
+const integrationJWTSecret = "test-only-integration-secret-not-for-production"
+const integrationPostgresPassword = "test-only-postgres-password-not-for-production"
+
+func TestMain(m *testing.M) {
+	if err := os.Setenv("JWT_SECRET", integrationJWTSecret); err != nil {
+		panic(err)
+	}
+	if err := os.Setenv("POSTGRES_PASSWORD", integrationPostgresPassword); err != nil {
+		panic(err)
+	}
+	os.Exit(m.Run())
+}
+
+func authenticatedGRPCDial(ctx context.Context, target string) (*grpc.ClientConn, error) {
+	return grpc.DialContext(ctx, target,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor("integration-test", auth.RoleAdmin)),
+	)
+}
+
+func authorizedHTTP(t *testing.T, method, target string, body io.Reader) (*http.Response, error) {
+	t.Helper()
+	token, err := auth.IssueToken("integration-test", auth.RoleAdmin, time.Hour)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(method, target, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	return http.DefaultClient.Do(req)
+}
 
 func TestClusterIntegration(t *testing.T) {
 	// Check if docker daemon is running
@@ -22,12 +62,14 @@ func TestClusterIntegration(t *testing.T) {
 	// 1. Spin up the docker-compose stack
 	t.Log("Starting docker-compose services...")
 	cmdUp := exec.Command("docker", "compose", "-f", "../../deploy/docker/docker-compose.yml", "up", "-d", "--build")
+	cmdUp.Env = os.Environ()
 	if out, err := cmdUp.CombinedOutput(); err != nil {
 		t.Fatalf("failed to start docker-compose: %v\nOutput: %s", err, string(out))
 	}
 	defer func() {
 		t.Log("Cleaning up docker-compose services...")
 		cmdDown := exec.Command("docker", "compose", "-f", "../../deploy/docker/docker-compose.yml", "down", "-v")
+		cmdDown.Env = os.Environ()
 		_ = cmdDown.Run()
 	}()
 
@@ -50,14 +92,14 @@ func TestClusterIntegration(t *testing.T) {
 
 	// 3. Dial Metadata and Scheduler services
 	ctx := context.Background()
-	metaConn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	metaConn, err := authenticatedGRPCDial(ctx, "localhost:50051")
 	if err != nil {
 		t.Fatalf("failed to dial metadata gRPC: %v", err)
 	}
 	defer metaConn.Close()
 	metaClient := pb.NewMetadataServiceClient(metaConn)
 
-	schedConn, err := grpc.Dial("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	schedConn, err := authenticatedGRPCDial(ctx, "localhost:50052")
 	if err != nil {
 		t.Fatalf("failed to dial scheduler gRPC: %v", err)
 	}
@@ -118,7 +160,9 @@ Loop:
 		case <-timeout:
 			t.Fatal("timed out waiting for worker-2 to transition to dead status")
 		case <-ticker.C:
-			res, err := metaClient.GetNodes(ctx, &pb.GetNodesRequest{})
+			pollCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+			res, err := metaClient.GetNodes(pollCtx, &pb.GetNodesRequest{})
+			cancel()
 			if err != nil {
 				t.Logf("GetNodes query failed: %v", err)
 				continue
@@ -160,7 +204,9 @@ Loop:
 	// 7. Verify Scheduler never schedules worker-2
 	t.Log("Requesting scheduling decision...")
 	for i := 0; i < 5; i++ {
-		schedRes, err := schedClient.Schedule(ctx, &pb.ScheduleRequest{ClusterId: "00000000-0000-0000-0000-000000000000"})
+		scheduleCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		schedRes, err := schedClient.Schedule(scheduleCtx, &pb.ScheduleRequest{ClusterId: "00000000-0000-0000-0000-000000000000"})
+		cancel()
 		if err != nil {
 			t.Fatalf("scheduler request failed: %v", err)
 		}
@@ -183,7 +229,9 @@ Loop:
 	t.Log("Waiting for worker-2 to return to healthy...")
 	recovered := false
 	for i := 0; i < 15; i++ {
-		res, err := metaClient.GetNodes(ctx, &pb.GetNodesRequest{})
+		pollCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		res, err := metaClient.GetNodes(pollCtx, &pb.GetNodesRequest{})
+		cancel()
 		if err == nil {
 			for _, n := range res.GetNodes() {
 				if n.Hostname == "worker-2" && n.Status == "healthy" {
