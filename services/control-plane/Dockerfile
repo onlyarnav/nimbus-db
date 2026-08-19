@@ -7,7 +7,7 @@ COPY services/metadata-service ./services/metadata-service
 COPY services/control-plane ./services/control-plane
 
 WORKDIR /app/services/control-plane
-RUN CGO_ENABLED=0 go build -o /app/control-plane-service .
+RUN go mod tidy && CGO_ENABLED=0 go build -o /app/control-plane-service .
 
 FROM alpine:latest
 RUN adduser -D -u 10001 appuser
