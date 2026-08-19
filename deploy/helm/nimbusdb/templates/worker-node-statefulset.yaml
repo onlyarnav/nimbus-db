@@ -19,7 +19,9 @@ spec:
       containers:
         - name: worker-node
           image: {{ .Values.workerNode.image }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           ports:
+
             - containerPort: {{ .Values.workerNode.grpcPort }}
               name: grpc
             - containerPort: {{ .Values.workerNode.debugPort }}
@@ -31,6 +33,12 @@ spec:
               value: {{ .Values.workerNode.debugPort | quote }}
             - name: METADATA_GRPC_ADDR
               value: "{{ include "nimbusdb.fullname" . }}-metadata-service:{{ .Values.metadataService.grpcPort }}"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nimbusdb.fullname" . }}-secrets
+                  key: JWT_SECRET
+
           readinessProbe:
             httpGet:
               path: /health
