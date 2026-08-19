@@ -20,5 +20,5 @@ metadata:
     {{- include "nimbusdb.labels" . | nindent 4 }}
 type: Opaque
 stringData:
-  JWT_SECRET: {{ .Values.global.jwtSecret | quote }}
-  DATABASE_URL: "postgres://{{ .Values.postgres.user }}:{{ .Values.postgres.password }}@{{ include "nimbusdb.fullname" . }}-postgres:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}?sslmode=disable"
+  JWT_SECRET: {{ required "global.jwtSecret must be supplied at install time" .Values.global.jwtSecret | quote }}
+  DATABASE_URL: "postgres://{{ .Values.postgres.user }}:{{ required "postgres.password must be supplied at install time" .Values.postgres.password }}@{{ include "nimbusdb.fullname" . }}-postgres:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}?sslmode=disable"
