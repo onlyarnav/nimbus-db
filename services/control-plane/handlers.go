@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	pb "github.com/onlyarnav/nimbusdb/services/control-plane/proto/metadata"
 	pbAgent "github.com/onlyarnav/nimbusdb/services/control-plane/proto/nodeagent"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
@@ -226,7 +227,10 @@ func (h *Handlers) handleDeleteDatabase(w http.ResponseWriter, r *http.Request) 
 					}
 					// Dial and call DeleteDatabase
 					delCtx, cancel := context.WithTimeout(bgCtx, 5*time.Second)
-					conn, err := grpc.DialContext(delCtx, agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+					conn, err := grpc.DialContext(delCtx, agentAddr,
+						grpc.WithTransportCredentials(insecure.NewCredentials()),
+						grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor("control-plane", auth.RoleOperator)),
+					)
 					if err == nil {
 						agentClient := pbAgent.NewNodeAgentClient(conn)
 						_, _ = agentClient.DeleteDatabase(delCtx, &pbAgent.DeleteDatabaseRequest{DatabaseId: dbID})

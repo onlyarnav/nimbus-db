@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/control-plane/config"
 	pb "github.com/onlyarnav/nimbusdb/services/control-plane/proto/metadata"
 )
@@ -32,7 +33,10 @@ func main() {
 
 	// 1. Dial Metadata Service
 	slog.Info("connecting to metadata service", "address", cfg.MetadataGRPCAddr)
-	metaConn, err := grpc.DialContext(ctx, cfg.MetadataGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	metaConn, err := grpc.DialContext(ctx, cfg.MetadataGRPCAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor("control-plane", auth.RoleAdmin)),
+	)
 	if err != nil {
 		slog.Error("failed to connect to metadata service", "error", err)
 		os.Exit(1)
@@ -42,7 +46,10 @@ func main() {
 
 	// 2. Dial Scheduler Service
 	slog.Info("connecting to scheduler service", "address", cfg.SchedulerGRPCAddr)
-	schedConn, err := grpc.DialContext(ctx, cfg.SchedulerGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	schedConn, err := grpc.DialContext(ctx, cfg.SchedulerGRPCAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor("control-plane", auth.RoleOperator)),
+	)
 	if err != nil {
 		slog.Error("failed to connect to scheduler service", "error", err)
 		os.Exit(1)

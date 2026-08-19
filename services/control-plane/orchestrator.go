@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	pb "github.com/onlyarnav/nimbusdb/services/control-plane/proto/metadata"
 	pbAgent "github.com/onlyarnav/nimbusdb/services/control-plane/proto/nodeagent"
 )
@@ -34,6 +35,7 @@ func (o *Orchestrator) ProvisionDatabase(ctx context.Context, dbID string, name 
 	var lastErr error
 	attempts := 0
 	maxAttempts := 3
+	attemptedNodes := make(map[string]struct{}, maxAttempts)
 
 	for attempts < maxAttempts {
 		attempts++
@@ -75,6 +77,21 @@ func (o *Orchestrator) ProvisionDatabase(ctx context.Context, dbID string, name 
 			}
 		}
 
+		// A failed node should not be retried while another eligible node is
+		// available. This prevents a transient per-node failure from consuming
+		// every provisioning attempt on the same target.
+		if _, alreadyAttempted := attemptedNodes[nodeID]; alreadyAttempted {
+			for _, n := range nodesRes.GetNodes() {
+				if _, attempted := attemptedNodes[n.GetId()]; attempted || n.GetStatus() == "dead" || n.GetStatus() == "draining" {
+					continue
+				}
+				nodeID = n.GetId()
+				targetNodeHostname = n.GetHostname()
+				slog.Info("using alternate node after prior provisioning failure", "database_id", dbID, "node_id", nodeID)
+				break
+			}
+		}
+
 		if targetNodeHostname == "" {
 			lastErr = fmt.Errorf("node %s details not found in metadata", nodeID)
 			slog.Warn("scheduler chosen node not found in metadata list", "node_id", nodeID)
@@ -105,7 +122,10 @@ func (o *Orchestrator) ProvisionDatabase(ctx context.Context, dbID string, name 
 		slog.Info("dialing NodeAgent", "database_id", dbID, "address", agentAddr)
 
 		provisionCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		agentConn, dialErr := grpc.DialContext(provisionCtx, agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		agentConn, dialErr := grpc.DialContext(provisionCtx, agentAddr,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor("control-plane", auth.RoleOperator)),
+		)
 		if dialErr != nil {
 			cancel()
 			lastErr = fmt.Errorf("failed to dial NodeAgent at %s: %w", agentAddr, dialErr)
@@ -122,12 +142,14 @@ func (o *Orchestrator) ProvisionDatabase(ctx context.Context, dbID string, name 
 		agentConn.Close()
 
 		if createErr != nil {
+			attemptedNodes[nodeID] = struct{}{}
 			lastErr = fmt.Errorf("NodeAgent CreateDatabase RPC failed: %w", createErr)
 			slog.Warn("NodeAgent CreateDatabase RPC failed", "database_id", dbID, "node_id", nodeID, "error", createErr)
 			continue
 		}
 
 		if !createRes.GetSuccess() {
+			attemptedNodes[nodeID] = struct{}{}
 			lastErr = fmt.Errorf("NodeAgent failed to provision database: %s", createRes.GetError())
 			slog.Warn("NodeAgent returned failed creation status", "database_id", dbID, "node_id", nodeID, "error", createRes.GetError())
 			continue

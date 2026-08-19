@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	pb "github.com/onlyarnav/nimbusdb/services/control-plane/proto/metadata"
 )
 
@@ -68,6 +69,7 @@ func TestValidationAndREST(t *testing.T) {
 	t.Run("EmptyName", func(t *testing.T) {
 		reqBody := `{"name":"","clusterId":"00000000-0000-0000-0000-000000000000"}`
 		req := httptest.NewRequest("POST", "/v1/databases", strings.NewReader(reqBody))
+		authorizeRequest(t, req)
 		w := httptest.NewRecorder()
 		mux.ServeHTTP(w, req)
 		if w.Code != http.StatusBadRequest {
@@ -79,6 +81,7 @@ func TestValidationAndREST(t *testing.T) {
 	t.Run("InvalidNamePattern", func(t *testing.T) {
 		reqBody := `{"name":"orders db; DROP TABLE databases;","clusterId":"00000000-0000-0000-0000-000000000000"}`
 		req := httptest.NewRequest("POST", "/v1/databases", strings.NewReader(reqBody))
+		authorizeRequest(t, req)
 		w := httptest.NewRecorder()
 		mux.ServeHTTP(w, req)
 		if w.Code != http.StatusBadRequest {
@@ -90,6 +93,7 @@ func TestValidationAndREST(t *testing.T) {
 	t.Run("MissingClusterID", func(t *testing.T) {
 		reqBody := `{"name":"orders-db","clusterId":""}`
 		req := httptest.NewRequest("POST", "/v1/databases", strings.NewReader(reqBody))
+		authorizeRequest(t, req)
 		w := httptest.NewRecorder()
 		mux.ServeHTTP(w, req)
 		if w.Code != http.StatusBadRequest {
@@ -101,6 +105,7 @@ func TestValidationAndREST(t *testing.T) {
 	t.Run("SuccessAccepted", func(t *testing.T) {
 		reqBody := `{"name":"orders-db","clusterId":"00000000-0000-0000-0000-000000000000"}`
 		req := httptest.NewRequest("POST", "/v1/databases", strings.NewReader(reqBody))
+		authorizeRequest(t, req)
 		w := httptest.NewRecorder()
 		mux.ServeHTTP(w, req)
 		if w.Code != http.StatusAccepted {
@@ -114,6 +119,16 @@ func TestValidationAndREST(t *testing.T) {
 			t.Errorf("unexpected response: %+v", resp)
 		}
 	})
+}
+
+func authorizeRequest(t *testing.T, req *http.Request) {
+	t.Helper()
+	t.Setenv("JWT_SECRET", "test-only-control-plane-secret-not-for-production")
+	token, err := auth.IssueToken("test-operator", auth.RoleOperator, time.Hour)
+	if err != nil {
+		t.Fatalf("issue test token: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
 }
 
 // Mock Scheduler Client
