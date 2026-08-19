@@ -25,7 +25,7 @@ jobs:
       - name: Deploy via Helm Upgrade
         run: |
           echo "Executing Helm upgrade with image tag ${{ github.sha }}..."
-          helm template nimbusdb deploy/helm/nimbusdb --set gateway.image=nimbusdb/gateway:${{ github.sha }}
+          helm template nimbusdb deploy/helm/nimbusdb --set gateway.image=nimbusdb/gateway:${{ github.sha }} --set-string global.jwtSecret="${{ secrets.NIMBUSDB_JWT_SECRET }}" --set-string postgres.password="${{ secrets.NIMBUSDB_POSTGRES_PASSWORD }}"
 
       - name: Invoke Phase 7 Deployment Controller Rollout
         run: |
