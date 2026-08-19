@@ -3,10 +3,12 @@ WORKDIR /app
 
 COPY services/observability ./services/observability
 COPY services/auth-service ./services/auth-service
+COPY services/deployment-controller ./services/deployment-controller
 COPY services/sla-monitor ./services/sla-monitor
 
+
 WORKDIR /app/services/sla-monitor
-RUN CGO_ENABLED=0 go build -o /app/sla-monitor-service .
+RUN go mod tidy && CGO_ENABLED=0 go build -o /app/sla-monitor-service .
 
 FROM alpine:latest
 RUN adduser -D -u 10001 appuser
