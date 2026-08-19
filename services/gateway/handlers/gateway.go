@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
@@ -13,6 +14,16 @@ import (
 	"github.com/onlyarnav/nimbusdb/services/metadata-service/region"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
 )
+
+func resolveNodeRegion(clusterID, hostname string) string {
+	for _, r := range region.SupportedRegions {
+		if strings.Contains(strings.ToLower(clusterID), r) || strings.Contains(strings.ToLower(hostname), r) {
+			return r
+		}
+	}
+	return region.RegionIndia
+}
+
 
 type CreateDatabaseRequest struct {
 	Name            string `json:"name"`
@@ -70,8 +81,8 @@ func (g *GatewayHandlers) handleCreateDatabase(w http.ResponseWriter, r *http.Re
 		http.Error(w, "database name is required", http.StatusBadRequest)
 		return
 	}
-	if req.ClusterID == "" {
-		req.ClusterID = "default-cluster"
+	if req.ClusterID == "" || req.ClusterID == "default-cluster" {
+		req.ClusterID = "00000000-0000-0000-0000-000000000000"
 	}
 
 	ctx := r.Context()
@@ -89,7 +100,7 @@ func (g *GatewayHandlers) handleCreateDatabase(w http.ResponseWriter, r *http.Re
 		for _, n := range nodesRes.GetNodes() {
 			nodeStates = append(nodeStates, region.NodeState{
 				ID:     n.GetId(),
-				Region: n.GetClusterId(), // or hostname prefix
+				Region: resolveNodeRegion(n.GetClusterId(), n.GetHostname()),
 				Status: n.GetStatus(),
 			})
 		}
@@ -216,13 +227,9 @@ func (g *GatewayHandlers) handleListRegions(w http.ResponseWriter, r *http.Reque
 	var nodeStates []region.NodeState
 	if err == nil {
 		for _, n := range nodesRes.GetNodes() {
-			reg := n.GetClusterId()
-			if reg == "" || reg == "default-cluster" {
-				reg = region.RegionIndia
-			}
 			nodeStates = append(nodeStates, region.NodeState{
 				ID:     n.GetId(),
-				Region: reg,
+				Region: resolveNodeRegion(n.GetClusterId(), n.GetHostname()),
 				Status: n.GetStatus(),
 			})
 		}
