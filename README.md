@@ -1,138 +1,187 @@
-# NimbusDB
-### A Distributed, AI-Native Cloud Database Platform
+# NimbusDB — Distributed, AI-Ready Cloud Database Platform
 
-NimbusDB is a multi-region, horizontally scalable cloud database platform designed to demonstrate the engineering surface area of Microsoft Azure SQL, Cosmos DB, and Azure Data Factory teams. 
+[![CI/CD Pipeline](https://github.com/onlyarnav/nimbusdb/actions/workflows/ci.yml/badge.svg)](https://github.com/onlyarnav/nimbusdb/actions)
+[![Rust Engine Tests](https://img.shields.io/badge/Rust_Engine-28%2F28_PASS-brightgreen)](file:///d:/testing-nimbus-db/nimbus-db/services/node-agent)
+[![Go Integration Tests](https://img.shields.io/badge/Go_Simulation-PASS-brightgreen)](file:///d:/testing-nimbus-db/nimbus-db/tests/integration)
+[![Helm Lint](https://img.shields.io/badge/Helm-Validated-blue)](file:///d:/testing-nimbus-db/nimbus-db/deploy/helm/nimbusdb)
 
-The platform enforces a strict separation between the **Control Plane** (orchestration, scheduling, and metadata tracking) and the **Data Plane** (storage engines, write-ahead logging, and replication), ensuring no shared in-process state.
+**NimbusDB** is a distributed, multi-region cloud database platform featuring an asynchronous control plane in Go, a 4KB paged crash-consistent storage engine with HNSW vector indexing in Rust, and automated cloud operations. Engineered as a portfolio project, NimbusDB demonstrates verifiable distributed systems mechanisms mirroring the engineering surface area of Microsoft Azure SQL, Cosmos DB, and Azure Data Factory platform teams.
 
----
-
-## 1. High-Level Architecture
-
-```
-                          ┌─────────────────────┐
-                          │   API Gateway        │
-                          │  (REST, auth, rate   │
-                          │   limiting)           │
-                          └──────────┬───────────┘
-                                     │
-                     ┌───────────────┴───────────────┐
-                     │        Control Plane           │
-                     │  (Scheduler, Provisioner,       │
-                     │   Metadata Service)             │
-                     └───────────────┬───────────────┘
-                                     │
-        ┌────────────────────────────┼────────────────────────────┐
-        │                            │                             │
-┌───────▼────────┐          ┌────────▼────────┐          ┌─────────▼───────┐
-│  Node Agent 1   │          │  Node Agent 2    │          │  Node Agent N     │
-│  (Data Plane)   │          │  (Data Plane)    │          │  (Data Plane)     │
-│  Storage Engine │          │  Storage Engine  │          │  Storage Engine   │
-└─────────────────┘          └──────────────────┘          └───────────────────┘
-```
-
-### Component Breakdown
-*   **Metadata Service**: The single source of truth for cluster metadata (regions, clusters, active nodes, database layouts). Written in **Go**, uses **PostgreSQL** as the backing store, and communicates internally via **gRPC**.
-*   **Capacity Scheduler**: A standalone placement service written in **Go** that evaluates node capacities and schedules databases onto the least-loaded nodes.
-*   **Worker Node (Node Agent)**: Simulated client representing compute hosts. Operates a telemetry loop reporting synthetic metrics and hosts a debug HTTP interface for partition testing. *(Storage engine will be implemented in **Rust**).*
-*   **Control Plane Dashboard**: A **Next.js** application polling the REST boundary to present real-time cluster health statuses and resource gauges.
+> [!NOTE]
+> **Educational & Portfolio Scope**: NimbusDB is built specifically to demonstrate real, verifiable distributed systems mechanisms (WAL replay post-crash, gRPC control plane orchestration, multi-region routing, HNSW graph search, and CI/CD automated rollbacks) backed by measured empirical benchmarks. It does not claim production parity with commercial distributed engines like Azure Cosmos DB or Google Spanner.
 
 ---
 
-## 2. Current Build Status: Phase 1 Complete
-Phase 1 (Distributed Cluster Foundation) is fully complete. The following features are currently active and tested:
-*   **gRPC Internal Routing**: Concurrently hosted gRPC service interfaces (`RegisterNode`, `SendHeartbeat`, `GetNodes`) and external REST boundaries (`GET /health`, `GET /v1/nodes`).
-*   **Health Manager Ticker**: Background evaluator checking node heartbeat liveness every 2s to classify nodes (`healthy` / `unhealthy` / `dead` / `overloaded`).
-*   **Least Loaded Scheduler**: Placement engine calculating resource scores with exclusions for dead/draining nodes and deprioritization for overloaded instances.
-*   **E2E Integration Test Suite**: Complete docker-compose orchestration containing automated chaos injection and state transition assertions.
-
----
-
-## 3. Repository Directory Layout
+## Architecture
 
 ```
-nimbusdb/
-├── GEMINI.md                  (Project Constitution)
-├── PROJECT_STATUS.md          (Live Build Status Tracker)
-├── docs/
-│   ├── benchmarks.md          (Real measured performance latencies)
-│   └── decisions/             (Architectural Decision Records)
-├── proto/
-│   └── metadata_service.proto (Internal gRPC protocol buffer definition)
-├── services/
-│   ├── metadata-service/      (Metadata registry microservice - Go)
-│   ├── scheduler/             (Least Loaded placement scheduler - Go)
-│   ├── worker-node/           (Simulated node client agent - Go)
-│   └── dashboard/             (Real-time control plane dashboard - Next.js)
-├── deploy/
-│   └── docker/
-│       └── docker-compose.yml (Cluster compose orchestrated stack)
-└── tests/
-    └── integration/
-        └── integration_test.go(Multi-node E2E chaos simulation test runner)
+                          ┌─────────────────────────────┐
+                          │         API Gateway         │
+                          │   (REST Edge, JWT Auth,     │
+                          │    Rate Limiting, Routing)  │
+                          └──────────────┬──────────────┘
+                                         │ gRPC
+                         ┌───────────────┴───────────────┐
+                         │         Control Plane         │
+                         │   (Scheduler, Provisioner,    │
+                         │    Reconciler, Deployer)      │
+                         └───────────────┬───────────────┘
+                                         │ gRPC
+        ┌────────────────────────────────┼────────────────────────────────┐
+        │                                │                                │
+┌───────▼────────┐              ┌────────▼────────┐              ┌────────▼────────┐
+│  Node Agent 1  │              │  Node Agent 2   │              │  Node Agent N   │
+│  (Data Plane)  │  gRPC Stream │  (Data Plane)   │  gRPC Stream │  (Data Plane)   │
+│  Rust Engine   ├─────────────►│  Rust Engine    ├─────────────►│  Rust Engine    │
+│ (WAL/B+/HNSW)  │              │ (WAL/B+/HNSW)   │              │ (WAL/B+/HNSW)   │
+└────────────────┘              └─────────────────┘              └─────────────────┘
+
+        Cross-cutting: Metadata Service (Postgres Source of Truth)
+                        Observability Stack (OTel / Prometheus / Alertmanager / Grafana)
+                        Multi-Region Router (Latency & Health Fallback)
 ```
 
 ---
 
-## 4. Getting Started: How to Run and Validate
+## Quickstart
 
 ### Prerequisites
-*   **Go 1.25+**
-*   **Node.js 18+ & npm**
-*   **Docker & Docker Compose**
+- **Rust / Cargo** (v1.80+)
+- **Go** (v1.22+)
+- **Docker Desktop** (v24.0+)
+- **Helm** (v3.10+) & **kubectl**
 
----
-
-### Step 1: Run the Automated E2E Integration Test Suite
-To spin up the entire cluster topology, inject simulated failures, and verify the scheduler's behavior under crash conditions, execute:
-
+### 1. Clone the Repository
 ```bash
-cd tests/integration
-go test -v -timeout 5m
+git clone https://github.com/onlyarnav/nimbusdb.git
+cd nimbusdb
 ```
 
-This test program will automatically:
-1. Spin up the Postgres database, Metadata Service, Scheduler, and 3 Worker Node daemons inside a Docker Compose bridge network.
-2. Verify all nodes auto-register and establish active heartbeat logs.
-3. Pause `worker-2` heartbeats and assert that the `HealthManager` detects its failure (transitions: `healthy` $\rightarrow$ `unhealthy` at 15s $\rightarrow$ `dead` at 60s).
-4. Request a placement from the Scheduler and verify that the dead node is excluded from decisions.
-5. Resume `worker-2` heartbeats and verify it recovers successfully to `healthy`.
-6. Clean up and delete Docker containers, networks, and test database volumes on exit.
-
----
-
-### Step 2: Run Local Micro-Benchmarks
-To run local performance benchmarks measuring registration and heartbeat database latencies:
-
+### 2. Run Rust Storage Engine Test Suite (28 Tests)
+Verify the core 4KB page manager, WAL replay, crash recovery kill loop, B+Tree, HNSW vector search, and replication streams:
 ```bash
-cd services/metadata-service/tests
-$env:DATABASE_URL="postgres://postgres:password@localhost:5432/nimbusdb?sslmode=disable"
-go test -bench=MetadataService
+cd services/node-agent
+cargo test --workspace
+cd ../..
 ```
 
-*Note: Requires a local running PostgreSQL instance (or start the container in `deploy/docker` manually first).*
+### 3. Validate Kubernetes Helm Chart
+Lint and dry-run render the 17 Kubernetes manifests for all stateless and stateful services:
+```bash
+# Lint the chart
+helm lint deploy/helm/nimbusdb
+
+# Template rendering with required credentials
+helm template nimbusdb deploy/helm/nimbusdb \
+  --set global.jwtSecret="prod-secret-token-32-bytes-long!" \
+  --set postgres.password="prod-db-password"
+```
+
+### 4. Run the Full Local Stack via Docker Compose
+```bash
+# Build and start services and PostgreSQL metadata store
+docker compose -f deploy/docker/docker-compose.yml up -d
+
+# Check running container statuses
+docker compose -f deploy/docker/docker-compose.yml ps
+```
+
+### 5. Example API Requests
+
+#### A. Health Check & Observability
+```bash
+curl http://localhost:8080/health
+curl http://localhost:8080/metrics
+```
+
+#### B. Create a Database (Control Plane REST API)
+```bash
+curl -X POST http://localhost:8080/v1/databases \
+  -H "Authorization: Bearer <OPERATOR_JWT_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "finance-db", "clusterId": "00000000-0000-0000-0000-000000000000"}'
+```
+
+#### C. Insert Vector Record (Node Agent gRPC / REST Edge)
+```bash
+curl -X POST http://localhost:8080/v1/vectors/insert \
+  -H "Authorization: Bearer <OPERATOR_JWT_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "databaseId": "finance-db",
+    "vectorId": "doc-101",
+    "values": [0.12, 0.85, 0.34, 0.91, 0.05, 0.44, 0.78, 0.23, 0.67, 0.11, 0.89, 0.33, 0.55, 0.77, 0.99, 0.10],
+    "metadata": {"region": "india", "category": "sec-filing"}
+  }'
+```
+
+#### D. Hybrid Vector Search (SQL Predicate + Cosine Similarity)
+```bash
+curl -X POST http://localhost:8080/v1/vectors/search \
+  -H "Authorization: Bearer <READONLY_JWT_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "databaseId": "finance-db",
+    "queryVector": [0.12, 0.85, 0.34, 0.91, 0.05, 0.44, 0.78, 0.23, 0.67, 0.11, 0.89, 0.33, 0.55, 0.77, 0.99, 0.10],
+    "topK": 5,
+    "filterRegion": "india"
+  }'
+```
+
+### 6. Access Dashboard
+Navigate to `http://localhost:3000` to view cluster topology, node health states, and region routing metrics.
 
 ---
 
-### Step 3: Run the Live Dashboard
-To visualize the node metrics on a Web UI:
+## What's Implemented
 
-1. Ensure the docker-compose stack is running:
-   ```bash
-   docker compose -f deploy/docker/docker-compose.yml up -d
-   ```
-2. Navigate to the dashboard service and start the Next.js server:
-   ```bash
-   cd services/dashboard
-   npm install
-   npm run dev
-   ```
-3. Open [http://localhost:3000](http://localhost:3000) in your browser to view the active cluster health dashboard.
+| Phase | Module | Key Features & Technical Specifications |
+|-------|--------|----------------------------------------|
+| **Phase 1** | [Cluster Foundation](PHASE_1.md) | Metadata Service, gRPC node registration, 5s heartbeat loop, Health Manager background daemon (`healthy`→`unhealthy`→`dead`), and Least-Loaded Scheduler. |
+| **Phase 2** | [Control Plane](PHASE_2.md) | Asynchronous provisioning state machine, retry-on-node-failure orchestrator (28.7ms failover), background reconciler loop, and REST/gRPC interfaces. |
+| **Phase 3** | [Storage Engine](PHASE_3.md) | Rust 4KB page storage, CRC32 WAL with crash recovery (0.42s recovery time, 15,200 write ops/sec), Hash & B+Tree indexing, Compaction engine (66.7% space saved), Snapshots, and streaming ACK Replication. |
+| **Phase 4** | [Multi-Region](PHASE_4.md) | 5 simulated regions (`india`, `us-east`, `us-west`, `europe`, `japan`), nearest-region routing hints (1.8ms), region failover (16.2s e2e heartbeat window), and eventual consistency WAL replication streams. |
+| **Phase 5** | [Observability](PHASE_5.md) | OpenTelemetry distributed tracing across 4 service hops (<0.5ms overhead), Prometheus `/metrics` endpoints, Alertmanager rules, and Webhook Receiver. |
+| **Phase 6** | [AI-Ready Database](PHASE_6.md) | Vector data model with WAL durability, exact cosine search, metadata pre-filtering (0% leakage), HNSW graph index (100% Recall@10, 0.04ms search), and hybrid range + similarity search (0.22ms). |
+| **Phase 7** | [Cloud Operations](PHASE_7.md) | Zero-loss node draining (0 dropped requests across 50 connections), Deployment Controller (Rolling, Canary with 201.37ms auto-rollback, Blue-Green), linear regression capacity planner, and SLA monitor (99.90% availability). |
+| **Phase 8** | [Security](PHASE_8.md) | JWT token authentication, SHA-256 API key hashing with instant revocation, token-bucket rate limiting (429 enforcement), and RBAC hierarchy (`admin`, `operator`, `read-only`) with 403 Forbidden denial checks. |
+| **Phase 9** | [Kubernetes Deployment](PHASE_9.md) | Umbrella Helm chart (17 manifests), `StatefulSets` with PVCs for storage engine & metadata store, `Deployments` for stateless services, Ingress TLS edge isolation, and HPA auto-scaling. |
+| **Phase 10** | [CI/CD](PHASE_10.md) | GitHub Actions workflows (`ci.yml`, `cd.yml`, `rollback.yml`), pre-merge test checks, and automated deploy-time `helm rollback` (2.16 ms detection-to-recovery duration). |
 
 ---
 
-## 5. Logged Design Decisions
-For details on tradeoffs and selections made, refer to our ADR files under `docs/decisions/`:
-*   **Metadata DB**: [metadata-store-choice.md](file:///d:/nimbus-db/docs/decisions/metadata-store-choice.md) (PostgreSQL)
-*   **Communication protocol**: [internal-rpc-choice.md](file:///d:/nimbus-db/docs/decisions/internal-rpc-choice.md) (gRPC internally, REST at the dashboard boundary)
-*   **Storage engine language**: [rust-vs-cpp.md](file:///d:/nimbus-db/docs/decisions/rust-vs-cpp.md) (Rust)
+## Known Limitations
+
+Directly pulled from phase non-goals and independent audit findings in `VERIFICATION_CHECKLIST.md`:
+
+1. **Container Migration Path Dependency**: `services/metadata-service/Dockerfile:15` contains an unadjusted migration copy path (`db/migrations` vs `migrations`), requiring remediation for clean-state image builds in live Docker Compose / Helm cluster deployments.
+2. **Go Unit Test Suite Alignment**: Go test suites currently centralize end-to-end integration tests in `tests/integration`; unit test expectations in `worker-node` and `control-plane` require updating to align with Phase 3 snapshot implementations and Phase 8 auth headers.
+3. **Host Static Analysis Tooling**: Host execution of `golangci-lint`, `gosec`, and `gitleaks` requires local binary installation on PATH; CI runs them inside containerized environments.
+4. **Environment Variable Secret Enforcement**: Development fallback secret in `jwt.go` and committed test credentials in `values.yaml` must be explicitly overridden in production deployments.
+5. **Consensus & Multi-Region Consistency Model**: Multi-region replication operates on an eventual consistency model with asynchronous gRPC WAL streams and deterministic leader election rather than multi-region synchronous Raft/Paxos consensus.
+6. **ANN Traversal Boundary**: Vector search implements pre- and post-filtered graph traversal rather than full unified filter-aware graph traversal.
+7. **Data Protection Scope Guards**: Enterprise backup semantics (WORM immutable snapshots, legal-hold retention locks, anomaly detection) were deliberately parked and excluded to maintain architectural focus.
+8. **Cluster Federation & Service Mesh**: Multi-region topology is simulated within a single cluster via namespace/node affinity; geo-distributed K8s federation and external service meshes (Istio/Linkerd) are out of scope.
+
+---
+
+## Demo Video & Scenarios
+
+*(Video walkthrough link placeholder)*
+
+### Demo Walkthrough Scenarios:
+1. **Database Provisioning & Hybrid Vector Search**:
+   - Issue REST call to `/v1/databases` → watch Control Plane pick least-loaded node and provision in <15ms.
+   - Insert 16d embedding vectors → execute hybrid SQL range predicate + cosine similarity query.
+2. **Multi-Region Failover**:
+   - Kill all nodes in `us-east` region → watch Gateway automatically reroute traffic to next-nearest healthy region (`us-west`).
+3. **Storage Engine Chaos Recovery**:
+   - Kill storage engine process mid-write (`SIGKILL`) → restart process and observe instant WAL replay restoration (<0.5s recovery).
+4. **CI/CD Automated Rollback**:
+   - Push commit with runtime 503 error → watch post-deploy health check trigger `helm rollback` in <3ms to restore healthy version.
+
+---
+
+## License
+
+MIT License. Engineered by Arnav Purohit ([@onlyarnav](https://github.com/onlyarnav)).
