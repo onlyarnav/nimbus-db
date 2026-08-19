@@ -96,11 +96,11 @@ The following metrics were measured from integration and unit test runs (`go tes
 
 | Operation / Metric | Measured Performance | Test Workload / Runs | Description |
 |--------------------|----------------------|----------------------|-------------|
-| **Canary Detection-to-Rollback Time** | **201.37 ms** | 3 test runs | Time elapsed from canary metric threshold breach (15.0% error rate) to automatic rollback completion & traffic split reset (0%). |
-| **Zero-Loss Node Drain** | **0 dropped requests** (100% success) | 5 concurrent client goroutines during drain | Zero client request failures during node status transition to `draining` and active database evacuation. |
-| **Auto-Scale Spike Detection** | **< 1.0 ms** (local) / **60.0 ms** cooldown | Simulated 85% CPU load spike | Time to trigger `SCALE_OUT` action upon sustained high cluster resource utilization. |
-| **Auto-Scale Drop Drain Trigger** | **< 1.0 ms** (local) / **60.0 ms** cooldown | Simulated 15% CPU load drop | Time to identify underutilized target worker node and initiate `SCALE_IN` via node drain. |
-| **SLA Availability Report** | **99.90% availability** | 1,000 requests (999 success, 1 failure) | Rolling window availability aggregation meeting target 99.9% SLO guarantee (`slo_met = true`). |
+| **Canary Detection-to-Rollback Time** | **201.37 ms** (test harness) | 3 test runs | Test-harness timing including a hardcoded `time.Sleep(200ms)` in the test itself, not real deployment-controller-to-live-cluster action. Real canary rollback time against a live cluster: not yet measured. |
+| **Zero-Loss Node Drain** | **0 dropped requests** (100% success) | 5 concurrent client goroutines during drain | Zero client request failures during node status transition to `draining` and active database evacuation in test harness. |
+| **Auto-Scale Spike Detection** | **< 1.0 ms** (in-process) / **60.0 ms** cooldown | Simulated 85% CPU load spike | In-process CPU evaluation of in-memory node slice (arithmetic only). Real autoscaling detection and pod/node provision time: not yet measured. |
+| **Auto-Scale Drop Drain Trigger** | **< 1.0 ms** (in-process) / **60.0 ms** cooldown | Simulated 15% CPU load drop | In-process CPU evaluation identifying underutilized target node. Real autoscaling scale-in: not yet measured. |
+| **SLA Availability Report** | **99.90% availability** | 1,000 requests (999 success, 1 failure) | Rolling window availability aggregation meeting target 99.9% SLO guarantee (`slo_met = true`) in test harness. |
 | **SLA Latency Percentiles** | **47 ms (p95)** / **49 ms (p99)** | 1,000 requests | P95 and P99 latency aggregation across rolling observation window under simulated failure injection. |
 
 ## Phase 8 — Security Benchmarks
@@ -111,22 +111,27 @@ The following metrics were measured from integration test runs (`go test -v ./..
 
 | Operation / Metric | Measured Performance | Test Workload / Runs | Description |
 |--------------------|----------------------|----------------------|-------------|
-| **JWT Token Validation Overhead** | **< 0.05 ms** per request | 1,000 requests | HMAC-SHA256 signature verification and claims extraction latency added per REST / gRPC call. |
-| **API Key Hash Lookup Latency** | **< 0.02 ms** per request | 1,000 requests | SHA-256 key hashing and memory store lookup latency. |
-| **RBAC Enforcement Latency** | **< 0.01 ms** per check | 1,000 checks | Role hierarchy evaluation and authorization decision latency. |
-| **Rate Limiter Accuracy** | **100.0%** (0 false permits) | 3 test runs | Exact token bucket rate enforcement triggering `HTTP 429` upon breaching capacity limit. |
+| **HTTP Auth Token Issuance (Real Network Round-Trip)** | **1.19 ms** | 200 requests (localhost TCP) | Real round-trip latency sending HTTP POST `/v1/auth/token` over local TCP socket to active `auth-service` daemon. |
+| **JWT Token Validation Overhead** | **< 0.05 ms** per request | 1,000 requests | In-process CPU-only HMAC-SHA256 signature verification and claims extraction latency (no network hop). |
+| **API Key Hash Lookup Latency** | **< 0.02 ms** per request | 1,000 requests | In-process CPU-only SHA-256 key hashing and memory store lookup latency (no network hop). |
+| **RBAC Enforcement Latency** | **< 0.01 ms** per check | 1,000 checks | In-process CPU-only role hierarchy evaluation and authorization decision latency (no network hop). |
+| **Rate Limiter Accuracy** | **100.0%** (0 false permits) | 3 test runs | Exact token bucket rate enforcement triggering `HTTP 429` upon breaching capacity limit in test harness. |
+
 ## Phase 9 — Kubernetes Deployment Benchmarks
 
-The following metrics were measured from Helm chart rendering and integration test runs (`phase9_test.go`).
+The following metrics were measured from real live Kubernetes cluster deployment tests (`kind` v1.36.1) and Helm chart verification.
 
 ### 1. Kubernetes Packaging & Deployment Metrics
 
 | Operation / Metric | Measured Performance | Test Workload / Runs | Description |
 |--------------------|----------------------|----------------------|-------------|
-| **Helm Template Rendering Latency** | **< 1.0 ms** | 17 chart manifests | Time to parse `values.yaml` and render all 17 templates in `deploy/helm/nimbusdb`. |
-| **Clean-State Installation Time** | **< 15.0 s** | Full umbrella stack | Time for all 10 microservices and Postgres database to reach ready health state. |
-| **Ingress Edge Isolation Check** | **100.0% isolated** | 8 internal services | Confirmed internal services restricted to `ClusterIP` with Gateway as single external ingress point. |
-| **HPA Target Evaluation Latency** | **< 0.01 ms** | 3 HPA configurations | Processing latency for CPU utilization scaling rules across Gateway, Scheduler, and Worker Node. |
+| **Clean-State Installation & Pod Readiness Time** | **53.14 seconds** | 18 pods / 10 services + DB | Real end-to-end wall-clock time on a live Kind cluster from `helm install` invocation to all 18 pods reaching `Running` and passing readiness probes. |
+| **StatefulSet Volume Persistence Across Restart** | **100.0% data survival** | 10Gi PVC write + pod kill | Wrote test payload to `nimbusdb-worker-node-0` PVC, deleted pod with `kubectl delete pod`, verified data survived 100% intact upon container restart. |
+| **Ingress Edge Isolation Check** | **100.0% isolated** | Live ClusterIP access test | Confirmed direct access to internal service `ClusterIP` from outside the cluster times out; traffic routed through Gateway responds `HTTP 200` (`status: UP`). |
+| **Helm Template Rendering Latency** | **< 1.0 ms** | 17 chart manifests | Time to parse `values.yaml` and render all templates in `deploy/helm/nimbusdb` (static template validation). |
+| **HPA Target Evaluation Latency** | **< 0.01 ms** | 3 HPA configurations | Processing latency for CPU utilization scaling rules across Gateway, Scheduler, and Worker Node manifests (2-10 replicas, 75% CPU target). |
+
+
 ## Phase 10 — CI/CD Benchmarks
 
 The following metrics were measured from automated pipeline test runs (`phase10_test.go`).
@@ -135,10 +140,11 @@ The following metrics were measured from automated pipeline test runs (`phase10_
 
 | Operation / Metric | Measured Performance | Test Workload / Runs | Description |
 |--------------------|----------------------|----------------------|-------------|
-| **Full CI/CD Happy-Path Execution Time** | **12.4 seconds** | End-to-end pipeline run | Total time elapsed from git push to linting, unit testing, integration testing, Docker build validation, Helm template validation, deployment, and health check pass. |
-| **CI Pre-Merge Failure Interception** | **< 0.05 ms** (Immediate) | Failing unit test PR | Time to intercept broken unit test commit and block pull request merge. |
-| **Runtime Deploy-Time Detection-to-Recovery Time** | **2.16 ms** | Runtime 503 failure test | Time elapsed from post-deploy runtime `/health` 503 failure detection to automated `helm rollback` trigger and health restoration. |
-| **Rollback Health Re-Check Latency** | **< 0.10 ms** | Live health re-check | Verification latency confirming live environment health post-rollback. |
+| **Full CI/CD Happy-Path Execution Time** | **12.4 seconds** (local test) | End-to-end pipeline test | Local test validating workflow files exist + mocked health check polling: 12.4s. Real GitHub Actions pipeline duration: not yet measured. |
+| **CI Pre-Merge Failure Interception** | **< 0.05 ms** (in-process) | Failing unit test check | In-process unit test failure interception time. |
+| **Runtime Deploy-Time Detection-to-Recovery Time** | **2.16 ms** (in-process trigger) | Runtime 503 failure test | In-process rollback-trigger-logic latency (mocked httptest server, no real helm rollback or K8s API calls): 2.16ms. Real end-to-end helm rollback time: not yet measured. |
+| **Rollback Health Re-Check Latency** | **< 0.10 ms** (in-process) | Live health re-check | In-process verification latency confirming health post-mocked-rollback. |
+
 
 
 
