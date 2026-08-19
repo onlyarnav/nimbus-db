@@ -1,12 +1,12 @@
 module github.com/onlyarnav/nimbusdb/services/gateway
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/onlyarnav/nimbusdb/services/auth-service v0.0.0
 	github.com/onlyarnav/nimbusdb/services/metadata-service v0.0.0
 	github.com/onlyarnav/nimbusdb/services/observability v0.0.0
-	google.golang.org/grpc v1.65.0
+	google.golang.org/grpc v1.79.3
 )
 
 require (

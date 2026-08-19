@@ -8,7 +8,7 @@ COPY services/metadata-service ./services/metadata-service
 COPY services/gateway ./services/gateway
 
 WORKDIR /app/services/gateway
-RUN CGO_ENABLED=0 go build -o /app/gateway-service .
+RUN go mod tidy && CGO_ENABLED=0 go build -o /app/gateway-service .
 
 FROM alpine:latest
 RUN adduser -D -u 10001 appuser
