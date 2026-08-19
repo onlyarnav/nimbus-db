@@ -3,9 +3,17 @@ package auth
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 )
+
+func TestMain(m *testing.M) {
+	if err := os.Setenv("JWT_SECRET", "test-only-auth-service-secret-not-for-production"); err != nil {
+		panic(err)
+	}
+	os.Exit(m.Run())
+}
 
 func TestJWTTokenIssuanceAndVerification(t *testing.T) {
 	token, err := IssueToken("user-1", RoleAdmin, 1*time.Hour)

@@ -35,15 +35,12 @@ type Claims struct {
 	Exp  int64  `json:"exp"`
 }
 
-func getSecretKey() []byte {
+func getSecretKey() ([]byte, error) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		if os.Getenv("ENV") == "production" || os.Getenv("NODE_ENV") == "production" {
-			panic("JWT_SECRET environment variable MUST be set in production")
-		}
-		secret = "nimbusdb-dev-secret-key-32-bytes-long!"
+		return nil, errors.New("JWT_SECRET environment variable must be set")
 	}
-	return []byte(secret)
+	return []byte(secret), nil
 }
 
 // IssueToken creates a signed HMAC-SHA256 JWT bearer token with specified subject, role, and expiration.
@@ -74,7 +71,11 @@ func IssueToken(userID string, role string, duration time.Duration) (string, err
 	encClaims := base64.RawURLEncoding.EncodeToString(claimsJSON)
 
 	unsignedToken := fmt.Sprintf("%s.%s", encHeader, encClaims)
-	sig := calculateHMAC([]byte(unsignedToken), getSecretKey())
+	secret, err := getSecretKey()
+	if err != nil {
+		return "", err
+	}
+	sig := calculateHMAC([]byte(unsignedToken), secret)
 	encSig := base64.RawURLEncoding.EncodeToString(sig)
 
 	return fmt.Sprintf("%s.%s", unsignedToken, encSig), nil
@@ -88,7 +89,11 @@ func VerifyToken(tokenStr string) (*Claims, error) {
 	}
 
 	unsignedToken := fmt.Sprintf("%s.%s", parts[0], parts[1])
-	expectedSig := calculateHMAC([]byte(unsignedToken), getSecretKey())
+	secret, err := getSecretKey()
+	if err != nil {
+		return nil, err
+	}
+	expectedSig := calculateHMAC([]byte(unsignedToken), secret)
 
 	providedSig, err := base64.RawURLEncoding.DecodeString(parts[2])
 	if err != nil {
