@@ -18,7 +18,9 @@ spec:
       containers:
         - name: dashboard
           image: {{ .Values.dashboard.image }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           ports:
+
             - containerPort: {{ .Values.dashboard.port }}
               name: http
           env:

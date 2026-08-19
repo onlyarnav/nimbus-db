@@ -18,7 +18,9 @@ spec:
       containers:
         - name: capacity-planner
           image: {{ .Values.capacityPlanner.image }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           ports:
+
             - containerPort: {{ .Values.capacityPlanner.grpcPort }}
               name: grpc
             - containerPort: {{ .Values.capacityPlanner.metricsPort }}
@@ -28,6 +30,12 @@ spec:
               value: {{ .Values.capacityPlanner.grpcPort | quote }}
             - name: METRICS_PORT
               value: {{ .Values.capacityPlanner.metricsPort | quote }}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nimbusdb.fullname" . }}-secrets
+                  key: JWT_SECRET
+
           readinessProbe:
             httpGet:
               path: /health
