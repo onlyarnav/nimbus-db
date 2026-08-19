@@ -6,7 +6,7 @@ COPY services/auth-service ./services/auth-service
 COPY services/worker-node ./services/worker-node
 
 WORKDIR /app/services/worker-node
-RUN CGO_ENABLED=0 go build -o /app/worker-node-service .
+RUN go mod tidy && CGO_ENABLED=0 go build -o /app/worker-node-service .
 
 FROM alpine:latest
 RUN adduser -D -u 10001 appuser
