@@ -15,7 +15,9 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 
 	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
@@ -23,6 +25,7 @@ import (
 	"github.com/onlyarnav/nimbusdb/services/worker-node/config"
 	pb "github.com/onlyarnav/nimbusdb/services/worker-node/proto"
 	pbAgent "github.com/onlyarnav/nimbusdb/services/worker-node/proto/nodeagent"
+
 )
 
 func main() {
@@ -39,7 +42,10 @@ func main() {
 	defer stop()
 
 	slog.Info("connecting to metadata service", "address", cfg.MetadataGRPCAddr)
-	conn, err := grpc.DialContext(ctx, cfg.MetadataGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, cfg.MetadataGRPCAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor("worker-node", auth.RoleOperator)),
+	)
 	if err != nil {
 		slog.Error("failed to connect to metadata service", "error", err)
 		os.Exit(1)
@@ -48,27 +54,57 @@ func main() {
 
 	client := pb.NewMetadataServiceClient(conn)
 
-	// Call RegisterNode on startup
+	// Call RegisterNode on startup with retry for cold start resilience
 	slog.Info("registering node with metadata service", "cluster_id", cfg.ClusterID, "hostname", cfg.Hostname)
 
-	regCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
+	var nodeID string
+	var interval int32 = 5
 
-	res, err := client.RegisterNode(regCtx, &pb.RegisterNodeRequest{
-		ClusterId: cfg.ClusterID,
-		Hostname:  cfg.Hostname,
-	})
-	if err != nil {
-		slog.Error("failed to register node with metadata service", "error", err)
-		os.Exit(1)
+	for {
+		regCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		res, err := client.RegisterNode(regCtx, &pb.RegisterNodeRequest{
+			ClusterId: cfg.ClusterID,
+			Hostname:  cfg.Hostname,
+		})
+		cancel()
+		if err == nil {
+			nodeID = res.GetNodeId()
+			if res.GetHeartbeatIntervalSeconds() > 0 {
+				interval = res.GetHeartbeatIntervalSeconds()
+			}
+			break
+		}
+
+		st, ok := status.FromError(err)
+		if ok && st.Code() == codes.AlreadyExists {
+			nodesCtx, nodesCancel := context.WithTimeout(ctx, 5*time.Second)
+			nodesRes, getErr := client.GetNodes(nodesCtx, &pb.GetNodesRequest{ClusterId: cfg.ClusterID})
+			nodesCancel()
+			if getErr == nil {
+				for _, n := range nodesRes.GetNodes() {
+					if n.GetHostname() == cfg.Hostname {
+						nodeID = n.GetId()
+						slog.Info("re-attached to existing node registration", "node_id", nodeID, "hostname", cfg.Hostname)
+						break
+					}
+				}
+				if nodeID != "" {
+					break
+				}
+			}
+		}
+
+		slog.Warn("retrying node registration with metadata service", "error", err)
+		select {
+		case <-ctx.Done():
+			slog.Error("registration aborted on shutdown")
+			os.Exit(1)
+		case <-time.After(2 * time.Second):
+		}
 	}
 
-	nodeID := res.GetNodeId()
-	interval := res.GetHeartbeatIntervalSeconds()
-	if interval <= 0 {
-		interval = 5
-	}
 	slog.Info("node registered successfully", "node_id", nodeID, "heartbeat_interval_seconds", interval)
+
 
 	// Setup NodeAgent Server
 	agentServer := agent.NewServer("data", cfg.Hostname)
@@ -118,7 +154,12 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("injected"))
 	})
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"UP","service":"worker-node"}`))
+	})
 	mux.Handle("/metrics", telemetry.MetricsHandler())
+
 
 	debugServer := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.DebugPort),

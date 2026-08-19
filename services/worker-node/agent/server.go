@@ -134,9 +134,10 @@ func (s *Server) BackupDatabase(ctx context.Context, req *pb.BackupDatabaseReque
 	return nil, status.Error(codes.Unimplemented, "BackupDatabase is unimplemented in Phase 2")
 }
 
-// RestoreDatabase restores database from snapshot.
+// RestoreDatabase returns UNIMPLEMENTED until the storage engine snapshot API is
+// exposed through the NodeAgent RPC boundary.
 func (s *Server) RestoreDatabase(ctx context.Context, req *pb.RestoreDatabaseRequest) (*pb.RestoreDatabaseResponse, error) {
-	return &pb.RestoreDatabaseResponse{Success: true}, nil
+	return nil, status.Error(codes.Unimplemented, "RestoreDatabase is unimplemented in Phase 2")
 }
 
 // DrainNode evacuates all databases hosted on this node and prepares it for safe shutdown.
