@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node patch-next.js",
     "build": "next build",
+    "postinstall": "node patch-next.js",
     "start": "next start",
     "lint": "eslint"
+
   },
   "dependencies": {
     "next": "16.2.10",

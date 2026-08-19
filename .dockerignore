@@ -1,4 +1,7 @@
-**/node_modules
-**/.next
 **/target
 **/.git
+node_modules
+!services/dashboard/.next/standalone/node_modules
+!services/dashboard/.next/standalone/node_modules/**
+
+
