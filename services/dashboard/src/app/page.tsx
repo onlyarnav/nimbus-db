@@ -32,6 +32,18 @@ interface TelemetryMetrics {
   replication_lag_sec: number;
 }
 
+interface TraceSpan {
+  service: string;
+  name: string;
+  duration_ms: number;
+  status: string;
+}
+
+interface TraceResult {
+  trace_id: string;
+  spans: TraceSpan[];
+}
+
 const STATIC_REGIONS = ['india', 'us-east', 'us-west', 'europe', 'japan'];
 
 const LATENCY_MATRIX: Record<string, Record<string, number>> = {
@@ -50,8 +62,8 @@ export default function Home() {
 
   // Observability & Tracing State
   const [traceSearchId, setTraceSearchId] = useState('');
-  const [activeTraceResult, setActiveTraceResult] = useState<any | null>(null);
-  const [metrics, setMetrics] = useState<TelemetryMetrics>({
+  const [activeTraceResult, setActiveTraceResult] = useState<TraceResult | null>(null);
+  const [metrics] = useState<TelemetryMetrics>({
     p50_latency_ms: 1.8,
     p95_latency_ms: 12.4,
     p99_latency_ms: 28.5,
@@ -96,17 +108,22 @@ export default function Home() {
 
       setRegions(rList);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Connection to Metadata Service failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Connection to Metadata Service failed');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchNodesAndRegions();
+    const initialFetch = setTimeout(() => {
+      void fetchNodesAndRegions();
+    }, 0);
     const interval = setInterval(fetchNodesAndRegions, 3000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(initialFetch);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleTraceSearch = (e: React.FormEvent) => {
@@ -239,7 +256,7 @@ export default function Home() {
                 Trace ID: <span style={{ color: '#38BDF8', fontFamily: 'monospace' }}>{activeTraceResult.trace_id}</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {activeTraceResult.spans.map((span: any, idx: number) => (
+                {activeTraceResult.spans.map((span, idx) => (
                   <div key={idx} style={{ paddingLeft: `${idx * 1.5}rem`, display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <span style={{ color: '#94A3B8', fontFamily: 'monospace', fontSize: '0.8rem' }}>└─</span>
                     <strong style={{ minWidth: '120px', color: '#CBD5E1' }}>{span.service}</strong>
