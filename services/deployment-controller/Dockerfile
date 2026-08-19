@@ -8,7 +8,7 @@ COPY services/worker-node ./services/worker-node
 COPY services/deployment-controller ./services/deployment-controller
 
 WORKDIR /app/services/deployment-controller
-RUN CGO_ENABLED=0 go build -o /app/deployment-controller-service .
+RUN go mod tidy && CGO_ENABLED=0 go build -o /app/deployment-controller-service .
 
 FROM alpine:latest
 RUN adduser -D -u 10001 appuser
