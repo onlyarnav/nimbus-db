@@ -16,7 +16,9 @@ permissions:
 jobs:
   deploy:
     name: Deploy to Kubernetes & Rollout Strategy
+    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
