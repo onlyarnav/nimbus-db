@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -16,12 +19,22 @@ import (
 	pb "github.com/onlyarnav/nimbusdb/services/worker-node/proto/nodeagent"
 )
 
+// VectorEntry holds an inserted vector embedding and metadata.
+type VectorEntry struct {
+	ID        string
+	Data      []byte
+	Embedding []float32
+	Metadata  map[string]string
+}
+
 // Server implements the NodeAgent gRPC interface.
 type Server struct {
 	pb.UnimplementedNodeAgentServer
 	mu        sync.Mutex
 	dbsByName map[string]string // name -> id
 	dbsByID   map[string]string // id -> name
+	vectors   map[string]map[string]*VectorEntry // dbID -> vectorID -> entry
+	nextLSN   uint64
 	dataDir   string
 	hostname  string
 
@@ -35,10 +48,12 @@ func NewServer(dataDir, hostname string) *Server {
 	return &Server{
 		dbsByName: make(map[string]string),
 		dbsByID:   make(map[string]string),
+		vectors:   make(map[string]map[string]*VectorEntry),
 		dataDir:   dataDir,
 		hostname:  hostname,
 	}
 }
+
 
 // CreateDatabase handles directory allocation and name uniqueness checks.
 func (s *Server) CreateDatabase(ctx context.Context, req *pb.CreateDatabaseRequest) (*pb.CreateDatabaseResponse, error) {
@@ -171,3 +186,171 @@ func (s *Server) DrainNode(ctx context.Context, req *pb.DrainNodeRequest) (*pb.D
 		DatabasesMoved: int32(movedCount),
 	}, nil
 }
+
+// InsertVector stores vector embedding with metadata into node memory/storage.
+func (s *Server) InsertVector(ctx context.Context, req *pb.InsertVectorRequest) (*pb.InsertVectorResponse, error) {
+	dbID := req.GetDatabaseId()
+	if dbID == "" {
+		dbID = "default"
+	}
+	vecID := req.GetId()
+	if vecID == "" {
+		return nil, status.Error(codes.InvalidArgument, "vector id is required")
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.vectors[dbID] == nil {
+		s.vectors[dbID] = make(map[string]*VectorEntry)
+	}
+
+	s.nextLSN++
+	lsn := s.nextLSN
+
+	s.vectors[dbID][vecID] = &VectorEntry{
+		ID:        vecID,
+		Data:      req.GetData(),
+		Embedding: req.GetEmbedding(),
+		Metadata:  req.GetMetadata(),
+	}
+
+	slog.Info("inserted vector into storage engine", "database_id", dbID, "vector_id", vecID, "lsn", lsn, "dims", len(req.GetEmbedding()))
+
+	return &pb.InsertVectorResponse{
+		Success: true,
+		Lsn:     lsn,
+	}, nil
+}
+
+// SearchVector performs cosine similarity search with metadata filtering and top-k ranking.
+func (s *Server) SearchVector(ctx context.Context, req *pb.SearchVectorRequest) (*pb.SearchVectorResponse, error) {
+	dbID := req.GetDatabaseId()
+	if dbID == "" {
+		dbID = "default"
+	}
+
+	s.mu.Lock()
+	dbVecs := s.vectors[dbID]
+	var candidates []*VectorEntry
+	for _, v := range dbVecs {
+		if matchesFilter(v.Metadata, req.GetFilterExpression()) {
+			candidates = append(candidates, v)
+		}
+	}
+	s.mu.Unlock()
+
+	type scoredResult struct {
+		id         string
+		similarity float32
+	}
+	var scored []scoredResult
+	for _, c := range candidates {
+		sim := cosineSimilarity(req.GetQueryEmbedding(), c.Embedding)
+		scored = append(scored, scoredResult{id: c.ID, similarity: sim})
+	}
+
+	// Sort descending by similarity
+	sort.Slice(scored, func(i, j int) bool {
+		return scored[i].similarity > scored[j].similarity
+	})
+
+	topK := int(req.GetTopK())
+	if topK <= 0 {
+		topK = 10
+	}
+	if topK > len(scored) {
+		topK = len(scored)
+	}
+
+	var results []*pb.VectorSearchResult
+	for i := 0; i < topK; i++ {
+		results = append(results, &pb.VectorSearchResult{
+			Id:         scored[i].id,
+			Similarity: scored[i].similarity,
+		})
+	}
+	if results == nil {
+		results = []*pb.VectorSearchResult{}
+	}
+
+	return &pb.SearchVectorResponse{
+		Success: true,
+		Results: results,
+	}, nil
+}
+
+func cosineSimilarity(a, b []float32) float32 {
+	if len(a) != len(b) || len(a) == 0 {
+		return 0
+	}
+	var dot, normA, normB float32
+	for i := range a {
+		dot += a[i] * b[i]
+		normA += a[i] * a[i]
+		normB += b[i] * b[i]
+	}
+	if normA == 0 || normB == 0 {
+		return 0
+	}
+	return dot / (float32(math.Sqrt(float64(normA))) * float32(math.Sqrt(float64(normB))))
+}
+
+func matchesFilter(meta map[string]string, filterExpr string) bool {
+	expr := strings.TrimSpace(filterExpr)
+	if expr == "" {
+		return true
+	}
+	if meta == nil {
+		return false
+	}
+	// Case-insensitive lookup map for meta
+	lookup := make(map[string]string)
+	for k, v := range meta {
+		lookup[strings.ToLower(strings.TrimSpace(k))] = strings.TrimSpace(v)
+	}
+
+	var clauses []string
+	if strings.Contains(strings.ToUpper(expr), " AND ") {
+		clauses = strings.Split(expr, " AND ")
+		if len(clauses) <= 1 {
+			clauses = strings.Split(expr, " and ")
+		}
+	} else if strings.Contains(expr, ",") {
+		clauses = strings.Split(expr, ",")
+	} else {
+		clauses = []string{expr}
+	}
+
+	for _, clause := range clauses {
+		clause = strings.TrimSpace(clause)
+		if clause == "" {
+			continue
+		}
+		if strings.Contains(clause, "!=") {
+			parts := strings.SplitN(clause, "!=", 2)
+			key := strings.ToLower(strings.TrimSpace(parts[0]))
+			val := strings.Trim(strings.TrimSpace(parts[1]), "'\"")
+			if strings.EqualFold(lookup[key], val) {
+				return false
+			}
+		} else if strings.Contains(clause, "==") {
+			parts := strings.SplitN(clause, "==", 2)
+			key := strings.ToLower(strings.TrimSpace(parts[0]))
+			val := strings.Trim(strings.TrimSpace(parts[1]), "'\"")
+			if !strings.EqualFold(lookup[key], val) {
+				return false
+			}
+		} else if strings.Contains(clause, "=") {
+			parts := strings.SplitN(clause, "=", 2)
+			key := strings.ToLower(strings.TrimSpace(parts[0]))
+			val := strings.Trim(strings.TrimSpace(parts[1]), "'\"")
+			if !strings.EqualFold(lookup[key], val) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+

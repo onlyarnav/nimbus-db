@@ -61,10 +61,11 @@ func (r *Reconciler) Reconcile(ctx context.Context) {
 			continue
 		}
 
-		if time.Since(updatedAt) > r.timeout {
-			slog.Warn("found database stuck in provisioning state past timeout threshold, resuming provisioning",
-				"database_id", db.GetId(), "name", db.GetName(), "updated_at", db.GetUpdatedAt(), "elapsed", time.Since(updatedAt),
+		if db.GetNodeId() == "" || time.Since(updatedAt) > r.timeout {
+			slog.Info("reconciler dispatching provisioning for database",
+				"database_id", db.GetId(), "name", db.GetName(), "node_id", db.GetNodeId(),
 			)
+
 
 			// Update the database update time first by sending a status touch.
 			// This prevents duplicate triggers in subsequent reconciliation loop ticks.

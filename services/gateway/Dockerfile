@@ -5,7 +5,9 @@ WORKDIR /app
 COPY services/observability ./services/observability
 COPY services/auth-service ./services/auth-service
 COPY services/metadata-service ./services/metadata-service
+COPY services/worker-node ./services/worker-node
 COPY services/gateway ./services/gateway
+
 
 WORKDIR /app/services/gateway
 RUN go mod tidy && CGO_ENABLED=0 go build -o /app/gateway-service .

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -13,6 +14,7 @@ import (
 	pb "github.com/onlyarnav/nimbusdb/services/control-plane/proto/metadata"
 	pbAgent "github.com/onlyarnav/nimbusdb/services/control-plane/proto/nodeagent"
 )
+
 
 // Orchestrator coordinates provisioning and placement tasks.
 type Orchestrator struct {
@@ -115,9 +117,12 @@ func (o *Orchestrator) ProvisionDatabase(ctx context.Context, dbID string, name 
 		// Resolves by hostname in bridge network or localhost in local test
 		if targetNodeHostname == "worker-local" || targetNodeHostname == "test-worker-node" || targetNodeHostname == "localhost" {
 			agentAddr = "localhost:50053"
+		} else if strings.HasPrefix(targetNodeHostname, "nimbusdb-worker-node-") {
+			agentAddr = fmt.Sprintf("%s.nimbusdb-worker-node:50053", targetNodeHostname)
 		} else {
 			agentAddr = fmt.Sprintf("%s:50053", targetNodeHostname)
 		}
+
 
 		slog.Info("dialing NodeAgent", "database_id", dbID, "address", agentAddr)
 

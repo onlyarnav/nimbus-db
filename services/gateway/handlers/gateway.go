@@ -1,18 +1,25 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"time"
+
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/onlyarnav/nimbusdb/services/auth-service/auth"
 	"github.com/onlyarnav/nimbusdb/services/gateway/router"
 	pb "github.com/onlyarnav/nimbusdb/services/metadata-service/proto"
 	"github.com/onlyarnav/nimbusdb/services/metadata-service/region"
 	"github.com/onlyarnav/nimbusdb/services/observability/telemetry"
+	pbAgent "github.com/onlyarnav/nimbusdb/services/worker-node/proto/nodeagent"
 )
 
 func resolveNodeRegion(clusterID, hostname string) string {
@@ -23,6 +30,50 @@ func resolveNodeRegion(clusterID, hostname string) string {
 	}
 	return region.RegionIndia
 }
+
+func getWorkerNodeAddr() string {
+	if addr := os.Getenv("WORKER_NODE_ADDR"); addr != "" {
+		return addr
+	}
+	return "nimbusdb-worker-node:50053"
+}
+
+func (g *GatewayHandlers) resolveWorkerNodeAddr(ctx context.Context, dbID string) string {
+	if dbID != "" && dbID != "default" {
+		dbRes, err := g.metadataClient.GetDatabase(ctx, &pb.GetDatabaseRequest{DatabaseId: dbID})
+		if err == nil && dbRes.GetDatabase() != nil {
+			endpoint := dbRes.GetDatabase().GetEndpoint()
+			if endpoint != "" {
+				host := strings.Split(endpoint, "/")[0]
+				if strings.HasPrefix(host, "nimbusdb-worker-node-") {
+					return host + ".nimbusdb-worker-node:50053"
+				}
+				if host != "" {
+					return host + ":50053"
+				}
+			}
+		}
+	}
+	return getWorkerNodeAddr()
+}
+
+
+type InsertVectorPayload struct {
+	DatabaseID string            `json:"databaseId,omitempty"`
+	ID         string            `json:"id"`
+	Data       string            `json:"data,omitempty"`
+	Embedding  []float32         `json:"embedding"`
+	Metadata   map[string]string `json:"metadata,omitempty"`
+}
+
+type SearchVectorPayload struct {
+	DatabaseID       string    `json:"databaseId,omitempty"`
+	QueryEmbedding   []float32 `json:"queryEmbedding"`
+	TopK             int32     `json:"topK,omitempty"`
+	FilterExpression string    `json:"filterExpression,omitempty"`
+	Exact            bool      `json:"exact,omitempty"`
+}
+
 
 
 type CreateDatabaseRequest struct {
@@ -66,11 +117,16 @@ func (g *GatewayHandlers) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /v1/nodes/{id}/drain", auth.AuthenticateAndAuthorize(auth.RoleAdmin)(http.HandlerFunc(g.handleDrainNode)))
 	mux.Handle("GET /v1/capacity/projection", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(g.handleGetCapacityProjection)))
 	mux.Handle("GET /v1/sla/report", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(g.handleGetSLAReport)))
+	mux.Handle("POST /v1/databases/{id}/vectors", auth.AuthenticateAndAuthorize(auth.RoleOperator)(http.HandlerFunc(g.handleInsertVector)))
+	mux.Handle("POST /v1/databases/{id}/vectors/search", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(g.handleSearchVector)))
+	mux.Handle("POST /v1/vectors/insert", auth.AuthenticateAndAuthorize(auth.RoleOperator)(http.HandlerFunc(g.handleInsertVector)))
+	mux.Handle("POST /v1/vectors/search", auth.AuthenticateAndAuthorize(auth.RoleReadOnly)(http.HandlerFunc(g.handleSearchVector)))
 	mux.HandleFunc("GET /v1/nodes", g.handleListNodes)
 	mux.HandleFunc("OPTIONS /v1/nodes", g.handleListNodes)
 	mux.HandleFunc("GET /health", g.handleHealth)
 	mux.Handle("GET /metrics", telemetry.MetricsHandler())
 }
+
 
 
 func (g *GatewayHandlers) handleCreateDatabase(w http.ResponseWriter, r *http.Request) {
@@ -394,4 +450,138 @@ func (g *GatewayHandlers) handleListNodes(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(list)
 }
+
+func (g *GatewayHandlers) handleInsertVector(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	dbID := r.PathValue("id")
+	var req InsertVectorPayload
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	if dbID == "" {
+		dbID = req.DatabaseID
+	}
+	if dbID == "" {
+		dbID = "default"
+	}
+	if req.ID == "" {
+		http.Error(w, "vector id is required", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	workerAddr := g.resolveWorkerNodeAddr(ctx, dbID)
+	conn, err := grpc.DialContext(ctx, workerAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor("gateway", auth.RoleOperator)),
+	)
+	if err != nil {
+		http.Error(w, "failed to dial worker node: "+err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+	defer conn.Close()
+
+	client := pbAgent.NewNodeAgentClient(conn)
+	res, err := client.InsertVector(ctx, &pbAgent.InsertVectorRequest{
+		DatabaseId: dbID,
+		Id:         req.ID,
+		Data:       []byte(req.Data),
+		Embedding:  req.Embedding,
+		Metadata:   req.Metadata,
+	})
+	if err != nil {
+		http.Error(w, "failed to insert vector: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":    res.GetSuccess(),
+		"lsn":        res.GetLsn(),
+		"id":         req.ID,
+		"databaseId": dbID,
+	})
+}
+
+func (g *GatewayHandlers) handleSearchVector(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	dbID := r.PathValue("id")
+	var req SearchVectorPayload
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	if dbID == "" {
+		dbID = req.DatabaseID
+	}
+	if dbID == "" {
+		dbID = "default"
+	}
+
+	ctx := r.Context()
+	workerAddr := g.resolveWorkerNodeAddr(ctx, dbID)
+	conn, err := grpc.DialContext(ctx, workerAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor("gateway", auth.RoleReadOnly)),
+	)
+
+	if err != nil {
+		http.Error(w, "failed to dial worker node: "+err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+	defer conn.Close()
+
+	client := pbAgent.NewNodeAgentClient(conn)
+	res, err := client.SearchVector(ctx, &pbAgent.SearchVectorRequest{
+		DatabaseId:       dbID,
+		QueryEmbedding:   req.QueryEmbedding,
+		TopK:             req.TopK,
+		FilterExpression: req.FilterExpression,
+		Exact:            req.Exact,
+	})
+	if err != nil {
+		http.Error(w, "failed to search vector: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	type SearchResultItem struct {
+		ID         string  `json:"id"`
+		Similarity float32 `json:"similarity"`
+	}
+	var results []SearchResultItem
+	for _, r := range res.GetResults() {
+		results = append(results, SearchResultItem{
+			ID:         r.GetId(),
+			Similarity: r.GetSimilarity(),
+		})
+	}
+	if results == nil {
+		results = []SearchResultItem{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":    res.GetSuccess(),
+		"databaseId": dbID,
+		"results":    results,
+	})
+}
+
 
