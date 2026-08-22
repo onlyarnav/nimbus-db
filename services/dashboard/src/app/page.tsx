@@ -6,6 +6,7 @@ interface NodeInfo {
   id: string;
   cluster_id: string;
   hostname: string;
+  region?: string;
   status: string;
   cpu_pct: number;
   memory_pct: number;
@@ -48,7 +49,6 @@ const STATIC_REGIONS = ['india', 'us-east', 'us-west', 'europe', 'japan'];
 
 const LATENCY_MATRIX: Record<string, Record<string, number>> = {
   'india': { 'india': 0, 'us-east': 180, 'us-west': 220, 'europe': 110, 'japan': 130 },
-
   'us-east': { 'india': 180, 'us-east': 0, 'us-west': 60, 'europe': 90, 'japan': 160 },
   'us-west': { 'india': 220, 'us-east': 60, 'us-west': 0, 'europe': 140, 'japan': 110 },
   'europe': { 'india': 110, 'us-east': 90, 'us-west': 140, 'europe': 0, 'japan': 210 },
@@ -85,11 +85,15 @@ export default function Home() {
       const data: NodeInfo[] = await res.json();
       setNodes(data);
 
-      // Compute Region Health Rollup
+      // Compute Region Health Rollup from Node Data
       const rList: RegionInfo[] = STATIC_REGIONS.map((reg) => {
-        const regNodes = data.filter((n) =>
-          n.cluster_id.toLowerCase().includes(reg) || n.hostname.toLowerCase().includes(reg)
-        );
+        const regNodes = data.filter((n) => {
+          if (n.region && n.region.toLowerCase() === reg) return true;
+          if (n.cluster_id && n.cluster_id.toLowerCase().includes(reg)) return true;
+          if (n.hostname && n.hostname.toLowerCase().includes(reg)) return true;
+          if ((!n.region || n.region === '') && reg === 'india') return true;
+          return false;
+        });
         const total = regNodes.length;
         const healthy = regNodes.filter((n) => n.status.toLowerCase() === 'healthy').length;
         const unhealthy = regNodes.filter((n) => n.status.toLowerCase() === 'unhealthy').length;
@@ -158,80 +162,85 @@ export default function Home() {
       case 'dead':
         return '#EF4444'; // Red
       case 'overloaded':
-        return '#EC4899'; // Pink/Purple
+        return '#8B5CF6'; // Purple
       default:
         return '#6B7280'; // Gray
     }
   };
 
-  const getRelativeTime = (timestamp: string | null) => {
-    if (!timestamp) return 'Never';
-    const now = new Date();
-    const diff = now.getTime() - new Date(timestamp).getTime();
-    const seconds = Math.floor(diff / 1000);
-    if (seconds < 0) return '0s ago';
+  const getRelativeTime = (timeStr: string | null) => {
+    if (!timeStr) return 'Never';
+    const seconds = Math.floor((new Date().getTime() - new Date(timeStr).getTime()) / 1000);
+    if (seconds < 0) return 'Just now';
     if (seconds < 60) return `${seconds}s ago`;
-    const minutes = Math.floor(seconds / 60);
-    return `${minutes}m ago`;
+    return `${Math.floor(seconds / 60)}m ago`;
   };
 
   return (
-    <div style={{ fontFamily: 'sans-serif', backgroundColor: '#0F172A', color: '#F8FAFC', minHeight: '100vh', padding: '2rem' }}>
-      <header style={{ borderBottom: '1px solid #334155', paddingBottom: '1rem', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', margin: 0, fontWeight: 700 }}>NimbusDB Control Plane & Telemetry Dashboard</h1>
-        <p style={{ color: '#94A3B8', margin: '0.5rem 0 0 0' }}>Live Multi-Region Topology, Prometheus Metrics, & OpenTelemetry Trace Lookup</p>
+    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0F172A', color: '#F8FAFC', minHeight: '100vh' }}>
+      <header style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1E293B', paddingBottom: '1rem' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 700, color: '#38BDF8' }}>NimbusDB Control Plane</h1>
+          <p style={{ margin: '0.5rem 0 0 0', color: '#94A3B8' }}>Cluster Topology & Observability Dashboard</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: error ? '#EF4444' : '#10B981' }}></div>
+          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: error ? '#EF4444' : '#10B981' }}>
+            {error ? 'Degraded Connection' : 'Connected to Cluster'}
+          </span>
+        </div>
       </header>
 
       {error && (
-        <div style={{ backgroundColor: '#7F1D1D', color: '#FCA5A5', padding: '1rem', borderRadius: '0.375rem', marginBottom: '1.5rem' }}>
-          <strong>Error:</strong> {error}. Ensure Metadata Service is running on http://localhost:8080
+        <div style={{ backgroundColor: '#450A0A', border: '1px solid #991B1B', color: '#FCA5A5', padding: '1rem', borderRadius: '0.5rem', marginBottom: '2rem' }}>
+          <strong>Error:</strong> {error}. Ensure Gateway/Metadata Service is running on http://localhost:8080
         </div>
       )}
 
-      {/* Metrics & Latency Overview Cards */}
-      <section style={{ marginBottom: '2.5rem' }}>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#38BDF8' }}>Observability Telemetry (Prometheus)</h2>
+      {/* Cluster Operational Metrics Header */}
+      <section style={{ marginBottom: '2rem' }}>
+        <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: '#38BDF8' }}>Cluster Health & Telemetry Metrics (OTel)</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem' }}>
           <div style={{ backgroundColor: '#1E293B', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #334155' }}>
-            <div style={{ color: '#94A3B8', fontSize: '0.85rem' }}>P50 Latency</div>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8' }}>P50 Latency</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10B981' }}>{metrics.p50_latency_ms} ms</div>
           </div>
           <div style={{ backgroundColor: '#1E293B', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #334155' }}>
-            <div style={{ color: '#94A3B8', fontSize: '0.85rem' }}>P95 Latency</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#F59E0B' }}>{metrics.p95_latency_ms} ms</div>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8' }}>P95 Latency</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#38BDF8' }}>{metrics.p95_latency_ms} ms</div>
           </div>
           <div style={{ backgroundColor: '#1E293B', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #334155' }}>
-            <div style={{ color: '#94A3B8', fontSize: '0.85rem' }}>P99 Latency</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#EC4899' }}>{metrics.p99_latency_ms} ms</div>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8' }}>P99 Latency</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#F59E0B' }}>{metrics.p99_latency_ms} ms</div>
           </div>
           <div style={{ backgroundColor: '#1E293B', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #334155' }}>
-            <div style={{ color: '#94A3B8', fontSize: '0.85rem' }}>Throughput (RPS)</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#38BDF8' }}>{metrics.requests_per_sec} req/s</div>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8' }}>Throughput</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#A855F7' }}>{metrics.requests_per_sec} QPS</div>
           </div>
           <div style={{ backgroundColor: '#1E293B', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #334155' }}>
-            <div style={{ color: '#94A3B8', fontSize: '0.85rem' }}>Error Rate</div>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8' }}>Error Rate</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10B981' }}>{metrics.error_rate_pct}%</div>
           </div>
           <div style={{ backgroundColor: '#1E293B', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #334155' }}>
-            <div style={{ color: '#94A3B8', fontSize: '0.85rem' }}>Replication Lag</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#38BDF8' }}>{metrics.replication_lag_sec * 1000} ms</div>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8' }}>Replication Lag</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10B981' }}>{(metrics.replication_lag_sec * 1000).toFixed(1)} ms</div>
           </div>
         </div>
       </section>
 
-      {/* OpenTelemetry Distributed Trace Lookup Panel */}
-      <section style={{ marginBottom: '2.5rem' }}>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#38BDF8' }}>Distributed Trace Search (OpenTelemetry / Jaeger)</h2>
+      {/* Distributed Trace Lookup Tool */}
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: '#38BDF8' }}>Distributed Trace Explorer (W3C TraceContext)</h2>
         <div style={{ backgroundColor: '#1E293B', padding: '1.5rem', borderRadius: '0.5rem', border: '1px solid #334155' }}>
-          <form onSubmit={handleTraceSearch} style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+          <form onSubmit={handleTraceSearch} style={{ display: 'flex', gap: '1rem', marginBottom: activeTraceResult ? '1.5rem' : 0 }}>
             <input
               type="text"
-              placeholder="Paste Trace ID (e.g. 2f79e2a6d8258d23ce9872d782fdec05)..."
+              placeholder="Enter Trace ID (e.g. 4bf92f3577b34da6a3ce929d0e0e4736)..."
               value={traceSearchId}
               onChange={(e) => setTraceSearchId(e.target.value)}
               style={{
                 flex: 1,
-                padding: '0.75rem',
+                padding: '0.75rem 1rem',
                 borderRadius: '0.375rem',
                 border: '1px solid #475569',
                 backgroundColor: '#0F172A',
@@ -359,7 +368,8 @@ export default function Home() {
                 </div>
 
                 <div style={{ color: '#94A3B8', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                  <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}><strong>Cluster / Region ID:</strong> {node.cluster_id}</div>
+                  <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}><strong>Region:</strong> <span style={{ textTransform: 'uppercase', color: '#38BDF8', fontWeight: 600 }}>{node.region || 'india'}</span></div>
+                  <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}><strong>Cluster ID:</strong> {node.cluster_id}</div>
                   <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}><strong>Node ID:</strong> {node.id}</div>
                 </div>
 
