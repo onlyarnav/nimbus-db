@@ -14,6 +14,7 @@ type NodeResponse struct {
 	ID            string  `json:"id"`
 	ClusterID     string  `json:"cluster_id"`
 	Hostname      string  `json:"hostname"`
+	Region        string  `json:"region"`
 	Status        string  `json:"status"`
 	CPUPct        float32 `json:"cpu_pct"`
 	MemoryPct     float32 `json:"memory_pct"`
@@ -42,8 +43,10 @@ func NodesHandler(db *pgxpool.Pool) http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		query := `SELECT id, cluster_id, hostname, status, COALESCE(cpu_pct, 0), COALESCE(memory_pct, 0), COALESCE(disk_pct, 0), last_heartbeat, registered_at
-		          FROM nodes`
+		query := `SELECT n.id, n.cluster_id, n.hostname, n.status, COALESCE(n.cpu_pct, 0), COALESCE(n.memory_pct, 0), COALESCE(n.disk_pct, 0), n.last_heartbeat, n.registered_at, COALESCE(r.name, 'india')
+		          FROM nodes n
+		          LEFT JOIN clusters c ON n.cluster_id = c.id
+		          LEFT JOIN regions r ON c.region_id = r.id`
 		rows, err := db.Query(ctx, query)
 		if err != nil {
 			slog.ErrorContext(ctx, "failed to query nodes", "error", err)
@@ -58,13 +61,16 @@ func NodesHandler(db *pgxpool.Pool) http.HandlerFunc {
 			var n NodeResponse
 			var lastHB *time.Time
 			var regAt time.Time
-			err := rows.Scan(&n.ID, &n.ClusterID, &n.Hostname, &n.Status, &n.CPUPct, &n.MemoryPct, &n.DiskPct, &lastHB, &regAt)
+			var regName string
+			err := rows.Scan(&n.ID, &n.ClusterID, &n.Hostname, &n.Status, &n.CPUPct, &n.MemoryPct, &n.DiskPct, &lastHB, &regAt, &regName)
 			if err != nil {
 				slog.ErrorContext(ctx, "failed to scan node", "error", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				_, _ = w.Write([]byte(`{"error": "failed to scan node"}`))
 				return
 			}
+			n.Region = regName
+
 			n.RegisteredAt = regAt.Format(time.RFC3339)
 			if lastHB != nil {
 				formatted := lastHB.Format(time.RFC3339)

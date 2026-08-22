@@ -64,3 +64,23 @@ func TestScheduleNodeWithRegionFallback_AllRegionsDead(t *testing.T) {
 		t.Fatalf("expected error when all regions dead, got nil")
 	}
 }
+
+func TestScheduleNodeWithRegionFallback_ExplicitRegionField(t *testing.T) {
+	nodes := []*pb.NodeInfo{
+		{Id: "node-1", Hostname: "nimbusdb-worker-node-0", Region: "india", Status: "healthy", CpuPct: 10, MemoryPct: 20, DiskPct: 30},
+		{Id: "node-2", Hostname: "nimbusdb-worker-node-1", Region: "us-east", Status: "healthy", CpuPct: 50, MemoryPct: 50, DiskPct: 50},
+	}
+
+	res, err := ScheduleNodeWithRegionFallback(nodes, "india")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if res.ServedRegion != "india" {
+		t.Errorf("expected served region india, got %s", res.ServedRegion)
+	}
+	if res.Node.NodeID != "node-1" {
+		t.Errorf("expected node-1, got %s", res.Node.NodeID)
+	}
+}
+

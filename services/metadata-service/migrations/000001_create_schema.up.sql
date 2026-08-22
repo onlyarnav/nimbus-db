@@ -51,7 +51,23 @@ CREATE TABLE replicas (
     role         TEXT NOT NULL DEFAULT 'follower'  -- leader | follower
 );
 
--- Seed default region and cluster for out-of-the-box local registration
-INSERT INTO regions (id, name) VALUES ('00000000-0000-0000-0000-000000000000', 'global') ON CONFLICT (name) DO NOTHING;
-INSERT INTO clusters (id, name, region_id) VALUES ('00000000-0000-0000-0000-000000000000', 'default-cluster', '00000000-0000-0000-0000-000000000000') ON CONFLICT (name) DO NOTHING;
+-- Seed canonical regions and regional clusters for multi-region topology
+INSERT INTO regions (id, name) VALUES
+    ('00000000-0000-0000-0000-000000000000', 'global'),
+    ('00000000-0000-0000-0000-000000000001', 'india'),
+    ('00000000-0000-0000-0000-000000000002', 'us-east'),
+    ('00000000-0000-0000-0000-000000000003', 'us-west'),
+    ('00000000-0000-0000-0000-000000000004', 'europe'),
+    ('00000000-0000-0000-0000-000000000005', 'japan')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO clusters (id, name, region_id) VALUES
+    ('00000000-0000-0000-0000-000000000000', 'default-cluster', '00000000-0000-0000-0000-000000000001'),
+    ('00000000-0000-0000-0000-000000000001', 'cluster-india', '00000000-0000-0000-0000-000000000001'),
+    ('00000000-0000-0000-0000-000000000002', 'cluster-us-east', '00000000-0000-0000-0000-000000000002'),
+    ('00000000-0000-0000-0000-000000000003', 'cluster-us-west', '00000000-0000-0000-0000-000000000003'),
+    ('00000000-0000-0000-0000-000000000004', 'cluster-europe', '00000000-0000-0000-0000-000000000004'),
+    ('00000000-0000-0000-0000-000000000005', 'cluster-japan', '00000000-0000-0000-0000-000000000005')
+ON CONFLICT (name) DO NOTHING;
+
 

@@ -286,13 +286,18 @@ func (g *GatewayHandlers) handleListRegions(w http.ResponseWriter, r *http.Reque
 	var nodeStates []region.NodeState
 	if err == nil {
 		for _, n := range nodesRes.GetNodes() {
+			nodeReg := n.GetRegion()
+			if nodeReg == "" {
+				nodeReg = resolveNodeRegion(n.GetClusterId(), n.GetHostname())
+			}
 			nodeStates = append(nodeStates, region.NodeState{
 				ID:     n.GetId(),
-				Region: resolveNodeRegion(n.GetClusterId(), n.GetHostname()),
+				Region: nodeReg,
 				Status: n.GetStatus(),
 			})
 		}
 	}
+
 
 	var rList []region.RegionHealthInfo
 	for _, regName := range region.SupportedRegions {
@@ -414,6 +419,7 @@ func (g *GatewayHandlers) handleListNodes(w http.ResponseWriter, r *http.Request
 		ID            string  `json:"id"`
 		ClusterID     string  `json:"cluster_id"`
 		Hostname      string  `json:"hostname"`
+		Region        string  `json:"region"`
 		Status        string  `json:"status"`
 		CPUPct        float32 `json:"cpu_pct"`
 		MemoryPct     float32 `json:"memory_pct"`
@@ -430,10 +436,15 @@ func (g *GatewayHandlers) handleListNodes(w http.ResponseWriter, r *http.Request
 			lastHB = &hb
 		}
 		regAt := n.GetRegisteredAt()
+		nodeReg := n.GetRegion()
+		if nodeReg == "" {
+			nodeReg = resolveNodeRegion(n.GetClusterId(), n.GetHostname())
+		}
 		list = append(list, NodeInfo{
 			ID:            n.GetId(),
 			ClusterID:     n.GetClusterId(),
 			Hostname:      n.GetHostname(),
+			Region:        nodeReg,
 			Status:        n.GetStatus(),
 			CPUPct:        n.GetCpuPct(),
 			MemoryPct:     n.GetMemoryPct(),
@@ -442,6 +453,7 @@ func (g *GatewayHandlers) handleListNodes(w http.ResponseWriter, r *http.Request
 			RegisteredAt:  regAt,
 		})
 	}
+
 	if list == nil {
 		list = []NodeInfo{}
 	}

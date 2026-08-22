@@ -78,7 +78,9 @@ message NodeInfo {
   float disk_pct = 7;
   string last_heartbeat = 8; // RFC3339 string
   string registered_at = 9; // RFC3339 string
+  string region = 10;
 }
+
 
 message GetNodesResponse {
   repeated NodeInfo nodes = 1;

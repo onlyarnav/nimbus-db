@@ -67,8 +67,16 @@ func ScheduleNodeWithRegionFallback(nodes []*pb.NodeInfo, preferredRegion string
 	return nil, ErrNoNodesAvailable
 }
 
-// Helper to infer region from node metadata (e.g. hostname prefix or cluster_id)
+// Helper to infer region from node metadata (e.g. NodeInfo.Region, hostname prefix or cluster_id)
 func inferNodeRegion(n *pb.NodeInfo) string {
+	if n.GetRegion() != "" {
+		for _, r := range region.SupportedRegions {
+			if strings.EqualFold(n.GetRegion(), r) {
+				return r
+			}
+		}
+	}
+
 	h := strings.ToLower(n.Hostname)
 	c := strings.ToLower(n.ClusterId)
 
@@ -79,3 +87,4 @@ func inferNodeRegion(n *pb.NodeInfo) string {
 	}
 	return region.RegionIndia
 }
+

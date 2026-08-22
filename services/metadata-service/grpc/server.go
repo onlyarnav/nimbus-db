@@ -146,12 +146,17 @@ func (s *Server) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.Get
 	var err error
 
 	if clusterID != "" {
-		query := `SELECT id, cluster_id, hostname, status, COALESCE(cpu_pct, 0), COALESCE(memory_pct, 0), COALESCE(disk_pct, 0), last_heartbeat, registered_at
-		         FROM nodes WHERE cluster_id = $1`
+		query := `SELECT n.id, n.cluster_id, n.hostname, n.status, COALESCE(n.cpu_pct, 0), COALESCE(n.memory_pct, 0), COALESCE(n.disk_pct, 0), n.last_heartbeat, n.registered_at, COALESCE(r.name, 'india')
+		         FROM nodes n
+		         LEFT JOIN clusters c ON n.cluster_id = c.id
+		         LEFT JOIN regions r ON c.region_id = r.id
+		         WHERE n.cluster_id = $1`
 		rows, err = s.db.Query(ctx, query, clusterID)
 	} else {
-		query := `SELECT id, cluster_id, hostname, status, COALESCE(cpu_pct, 0), COALESCE(memory_pct, 0), COALESCE(disk_pct, 0), last_heartbeat, registered_at
-		         FROM nodes`
+		query := `SELECT n.id, n.cluster_id, n.hostname, n.status, COALESCE(n.cpu_pct, 0), COALESCE(n.memory_pct, 0), COALESCE(n.disk_pct, 0), n.last_heartbeat, n.registered_at, COALESCE(r.name, 'india')
+		         FROM nodes n
+		         LEFT JOIN clusters c ON n.cluster_id = c.id
+		         LEFT JOIN regions r ON c.region_id = r.id`
 		rows, err = s.db.Query(ctx, query)
 	}
 
@@ -167,7 +172,8 @@ func (s *Server) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.Get
 		var cpu, mem, disk float32
 		var lastHB *time.Time
 		var regAt time.Time
-		err := rows.Scan(&n.Id, &n.ClusterId, &n.Hostname, &n.Status, &cpu, &mem, &disk, &lastHB, &regAt)
+		var regionName string
+		err := rows.Scan(&n.Id, &n.ClusterId, &n.Hostname, &n.Status, &cpu, &mem, &disk, &lastHB, &regAt, &regionName)
 		if err != nil {
 			slog.ErrorContext(ctx, "failed to scan node row", "error", err)
 			return nil, status.Errorf(codes.Internal, "scan failed: %v", err)
@@ -175,6 +181,7 @@ func (s *Server) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.Get
 		n.CpuPct = cpu
 		n.MemoryPct = mem
 		n.DiskPct = disk
+		n.Region = regionName
 		n.RegisteredAt = regAt.Format(time.RFC3339)
 		if lastHB != nil {
 			n.LastHeartbeat = lastHB.Format(time.RFC3339)

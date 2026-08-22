@@ -396,6 +396,7 @@ type NodeInfo struct {
 	DiskPct       float32                `protobuf:"fixed32,7,opt,name=disk_pct,json=diskPct,proto3" json:"disk_pct,omitempty"`
 	LastHeartbeat string                 `protobuf:"bytes,8,opt,name=last_heartbeat,json=lastHeartbeat,proto3" json:"last_heartbeat,omitempty"` // RFC3339 string
 	RegisteredAt  string                 `protobuf:"bytes,9,opt,name=registered_at,json=registeredAt,proto3" json:"registered_at,omitempty"`    // RFC3339 string
+	Region        string                 `protobuf:"bytes,10,opt,name=region,proto3" json:"region,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -489,6 +490,13 @@ func (x *NodeInfo) GetLastHeartbeat() string {
 func (x *NodeInfo) GetRegisteredAt() string {
 	if x != nil {
 		return x.RegisteredAt
+	}
+	return ""
+}
+
+func (x *NodeInfo) GetRegion() string {
+	if x != nil {
+		return x.Region
 	}
 	return ""
 }
@@ -1281,7 +1289,7 @@ const file_proto_metadata_service_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"0\n" +
 	"\x0fGetNodesRequest\x12\x1d\n" +
 	"\n" +
-	"cluster_id\x18\x01 \x01(\tR\tclusterId\"\x8c\x02\n" +
+	"cluster_id\x18\x01 \x01(\tR\tclusterId\"\xa4\x02\n" +
 	"\bNodeInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -1293,7 +1301,9 @@ const file_proto_metadata_service_proto_rawDesc = "" +
 	"memory_pct\x18\x06 \x01(\x02R\tmemoryPct\x12\x19\n" +
 	"\bdisk_pct\x18\a \x01(\x02R\adiskPct\x12%\n" +
 	"\x0elast_heartbeat\x18\b \x01(\tR\rlastHeartbeat\x12#\n" +
-	"\rregistered_at\x18\t \x01(\tR\fregisteredAt\"<\n" +
+	"\rregistered_at\x18\t \x01(\tR\fregisteredAt\x12\x16\n" +
+	"\x06region\x18\n" +
+	" \x01(\tR\x06region\"<\n" +
 	"\x10GetNodesResponse\x12(\n" +
 	"\x05nodes\x18\x01 \x03(\v2\x12.metadata.NodeInfoR\x05nodes\"0\n" +
 	"\x0fScheduleRequest\x12\x1d\n" +

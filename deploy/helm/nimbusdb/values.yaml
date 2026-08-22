@@ -82,6 +82,8 @@ controlPlane:
 
 workerNode:
   replicas: 3
+  clusterId: "00000000-0000-0000-0000-000000000001"
+  region: "india"
   image: "nimbusdb/worker-node:latest"
   grpcPort: 50053
   debugPort: 8085

@@ -31,8 +31,11 @@ spec:
               value: {{ .Values.workerNode.grpcPort | quote }}
             - name: DEBUG_PORT
               value: {{ .Values.workerNode.debugPort | quote }}
+            - name: CLUSTER_ID
+              value: {{ .Values.workerNode.clusterId | default "00000000-0000-0000-0000-000000000001" | quote }}
             - name: METADATA_GRPC_ADDR
               value: "{{ include "nimbusdb.fullname" . }}-metadata-service:{{ .Values.metadataService.grpcPort }}"
+
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
